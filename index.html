@@ -1,0 +1,4075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prince Alex Jet</title>
+    <!-- Updated Font: Inter for general text, Orbitron for headings/numbers -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for WhatsApp icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <!-- CryptoJS for provably fair model -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        /* General Styling */
+        :root {
+            --primary-color: #0d47a1;
+            --secondary-color: #1976d2;
+            --accent-color: #ffc107;
+            --danger-color: #d32f2f;
+            --success-color: #388e3c;
+            --text-color: #ffffff;
+            --bg-color: #0a192f;
+            --font-family-body: 'Inter', sans-serif; /* New: For general text */
+            --font-family-display: 'Orbitron', sans-serif; /* For headings, multipliers, countdown */
+            --dark-green: #2e7d32;
+            --light-green: #4caf50;
+            --graph-line-color: #FF0000; /* Red for the graph line */
+            --graph-fill-color-top: rgba(255, 0, 0, 0.4); /* Top of gradient */
+            --graph-fill-color-bottom: rgba(255, 0, 0, 0.05); /* Bottom of gradient, more transparent */
+            --tab-bg-active: #2a3a57;
+            --tab-bg-inactive: #1a2a47;
+            --tab-border-active: var(--accent-color);
+            --tab-border-inactive: #1a2a47;
+            --table-header-bg: #1a2a47;
+            --table-row-odd: #1a2a47;
+            --table-row-even: #0d253f;
+            --table-row-highlight: #3a668a;
+            --purple-color: #8A2BE2; /* A nice purple */
+            --modal-bg-gradient-start: #2e7d32;
+            --modal-bg-gradient-end: #1a2a47;
+            --modal-border-color: var(--light-green);
+        }
+
+        /* Light Theme Variables */
+        body.light-theme {
+            --primary-color: #bbdefb;
+            --secondary-color: #64b5f6;
+            --accent-color: #ff9800;
+            --danger-color: #ef5350;
+            --success-color: #66bb6a;
+            --text-color: #212121;
+            --bg-color: #e0f2f7;
+            --dark-green: #81c784;
+            --light-green: #a5d6a7;
+            --graph-line-color: #FF5722; /* Orange-red for light theme */
+            --graph-fill-color-top: rgba(255, 87, 34, 0.4);
+            --graph-fill-color-bottom: rgba(255, 87, 34, 0.05);
+            --tab-bg-active: #bbdefb;
+            --tab-bg-inactive: #e3f2fd;
+            --tab-border-active: var(--accent-color);
+            --tab-border-inactive: #e3f2fd;
+            --table-header-bg: #e3f2fd;
+            --table-row-odd: #e3f2fd;
+            --table-row-even: #bbdefb;
+            --table-row-highlight: #90caf9;
+            --purple-color: #9c27b0;
+            --modal-bg-gradient-start: #a5d6a7;
+            --modal-bg-gradient-end: #e3f2fd;
+            --modal-border-color: var(--success-color);
+        }
+
+        body {
+            margin: 0;
+            font-family: var(--font-family-body); /* Using Inter for body */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            padding: 0;
+            box-sizing: border-box;
+            overflow-y: auto;
+            transition: background-color 0.5s ease, color 0.5s ease; /* Smooth theme transition */
+        }
+
+        body.modal-open {
+            overflow: hidden; /* Disable scroll when modal is open */
+        }
+
+        /* Elements using display font */
+        h1, .site-logo, #multiplier-display-overlay, #countdown-timer-overlay, #busted-text-overlay,
+        .info-box p, .button, input[type="number"] {
+            font-family: var(--font-family-display);
+        }
+
+        /* Top Bar Styling */
+        .top-bar {
+            width: 100%;
+            background-color: var(--tab-bg-inactive); /* Use theme variable */
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between; /* Distribute items */
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative; /* For dropdown positioning */
+            transition: background-color 0.5s ease;
+        }
+
+        .top-bar-left, .top-bar-center {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .site-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-shadow: 0 0 5px var(--accent-color);
+            white-space: nowrap;
+        }
+
+        .top-button {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: var(--font-family-body);
+            font-size: 0.85rem;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .top-button:hover {
+            background-color: var(--primary-color); /* Adjusted for theme */
+        }
+
+        .balance-info {
+            font-size: 0.9rem;
+            color: var(--text-color);
+            white-space: nowrap;
+        }
+
+        /* Account Dropdown Styles */
+        .account-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 20px;
+            background-color: var(--tab-bg-active); /* Use theme variable */
+            border: 1px solid var(--secondary-color);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            min-width: 200px;
+            z-index: 101;
+            display: none;
+            flex-direction: column;
+            padding: 10px 0;
+            margin-top: 5px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .account-dropdown.show {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dropdown-header {
+            padding: 10px 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            color: var(--text-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .dropdown-item i {
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+        }
+
+        .dropdown-item.logout {
+            color: var(--danger-color);
+            font-weight: 700;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 10px;
+        }
+        .dropdown-item.logout i {
+            color: var(--danger-color);
+        }
+
+        /* Theme Toggle Button */
+        #theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: 5px;
+            transition: color 0.3s ease;
+        }
+        #theme-toggle:hover {
+            color: var(--accent-color);
+        }
+
+        /* Top Promotional Banner */
+        .top-banner {
+            width: 95%;
+            background: linear-gradient(90deg, var(--dark-green), var(--tab-bg-inactive)); /* Use theme variables */
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--light-green);
+            padding: 15px 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-around;
+            text-align: left;
+            gap: 15px;
+            transition: background 0.5s ease, border-color 0.5s ease;
+        }
+
+        .promo-image-container {
+            flex-shrink: 0;
+        }
+
+        .promo-image {
+            width: 120px;
+            height: auto;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .promo-text-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .promo-content {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .promo-button {
+            background-color: var(--accent-color);
+            color: #000;
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .promo-button:hover {
+            background-color: #ffda47;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content Area (Game + Sidebar) */
+        .main-content-area {
+            display: flex;
+            width: 95%;
+            max-width: 1200px;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .game-container {
+            flex: 2;
+            min-width: 450px;
+            background: linear-gradient(145deg, var(--table-row-even), var(--bg-color)); /* Use theme variables */
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--secondary-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: background 0.5s ease, border-color 0.5s ease;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--accent-color);
+            margin: 0;
+        }
+
+        /* Crash History Container */
+        #crash-history-container {
+            display: block;
+            background-color: rgba(13, 71, 161, 0.3); /* Keep this specific for now */
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--secondary-color);
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 10px;
+            transition: background-color 0.5s ease, border-color 0.5s ease;
+        }
+
+        #crash-history-container h3 {
+            margin: 0 0 10px 0;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            text-align: center;
+            font-family: var(--font-family-body);
+        }
+
+        #crash-history-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px;
+            max-height: 80px;
+            overflow-y: auto;
+            padding: 5px 0;
+        }
+
+        #crash-history-display .crash-green,
+        #crash-history-display .crash-red,
+        #crash-history-display .crash-purple {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: 700;
+            font-family: var(--font-family-display);
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        #crash-history-display .crash-green {
+            background-color: var(--success-color);
+            color: var(--text-color);
+        }
+
+        #crash-history-display .crash-red {
+            background-color: var(--danger-color);
+            color: var(--text-color);
+        }
+
+        #crash-history-display .crash-purple {
+            background-color: var(--purple-color);
+            color: var(--text-color);
+        }
+
+
+        /* Game Screen */
+        .game-screen {
+            position: relative;
+            height: 400px;
+            background: linear-gradient(to top, var(--bg-color), var(--primary-color), var(--table-row-highlight)); /* Use theme variables */
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--secondary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.5s ease, border-color 0.5s ease;
+        }
+        
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: transparent;
+        }
+
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allow clicks to pass through */
+            z-index: 20; /* Above other overlays */
+        }
+
+        #multiplier-display-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+            z-index: 10;
+            display: none;
+        }
+
+        #countdown-timer-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 6rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-shadow: 0 0 20px var(--accent-color);
+            z-index: 11;
+            display: none;
+        }
+
+        #busted-text-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--danger-color);
+            text-shadow: 0 0 10px rgba(211, 47, 47, 0.7);
+            z-index: 12;
+            display: none;
+            white-space: nowrap;
+        }
+        
+        @keyframes boom {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+
+        .control-panel {
+            background-color: rgba(13, 71, 161, 0.3); /* Keep specific for now */
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: background-color 0.5s ease;
+        }
+        
+        label {
+            font-size: 1rem;
+            color: var(--accent-color);
+            font-family: var(--font-family-body);
+        }
+
+        input[type="number"], input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.3);
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            color: var(--text-color);
+            font-family: var(--font-family-display);
+            font-size: 1.2rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        input[type="number"].input-error,
+        input[type="text"].input-error,
+        input[type="password"].input-error {
+            border-color: var(--danger-color);
+        }
+
+        .button {
+            padding: 15px 20px;
+            font-size: 1.5rem;
+            font-family: var(--font-family-display);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #bet-button {
+            background-color: var(--success-color);
+            color: var(--text-color);
+        }
+
+        #bet-button:hover {
+            background-color: var(--light-green);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        #cashout-button {
+            background-color: var(--accent-color);
+            color: #000;
+        }
+        
+        #cashout-button:hover {
+            background-color: #ffeb3b;
+            box-shadow: 0 6px 20px rgba(255, 235, 59, 0.4);
+        }
+
+        #cashout-button:disabled,
+        #bet-button:disabled {
+            background-color: #555;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Quick Bet Buttons */
+        .bet-quick-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .quick-bet-button {
+            padding: 8px 12px;
+            font-size: 1rem;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            flex-grow: 1;
+            max-width: 80px;
+            font-family: var(--font-family-body);
+        }
+
+        .quick-bet-button:hover {
+            background-color: var(--secondary-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .quick-bet-button:disabled {
+            background-color: #555;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Auto Cashout / Auto Bet Toggles */
+        .auto-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .auto-options label {
+            margin-bottom: 0;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            font-family: var(--font-family-body);
+        }
+
+        .auto-options .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .auto-options .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .auto-options .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .auto-options .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .auto-options input:checked + .slider {
+            background-color: var(--success-color);
+        }
+
+        .auto-options input:focus + .slider {
+            box-shadow: 0 0 1px var(--success-color);
+        }
+
+        .auto-options input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        
+        #message-display {
+            text-align: center;
+            font-size: 1.2rem;
+            min-height: 25px;
+            padding-top: 10px;
+            font-family: var(--font-family-body);
+        }
+
+        /* Player History Container (now part of tabs) */
+        #player-history-container {
+            display: none;
+            background-color: rgba(13, 71, 161, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--secondary-color);
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 0;
+        }
+
+        #player-history-container h3 {
+            margin: 0 0 10px 0;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            text-align: center;
+            font-family: var(--font-family-body);
+        }
+
+        #player-history-display {
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 10px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-family-body);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-item span {
+            flex-shrink: 0;
+        }
+
+        .history-item .ticket-id {
+            font-weight: 700;
+            color: var(--secondary-color);
+            min-width: 80px;
+            text-align: left;
+        }
+
+        .history-item .bet-amount {
+            color: var(--text-color);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .history-item .multiplier-info {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .history-item .status {
+            font-weight: 700;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .status-win {
+            color: var(--success-color);
+        }
+
+        .status-loss {
+            color: var(--danger-color);
+        }
+
+
+        /* Right Sidebar (Chat/History) */
+        .right-sidebar {
+            flex: 1;
+            min-width: 280px;
+            max-width: 350px;
+            background: linear-gradient(145deg, var(--table-row-even), var(--bg-color)); /* Use theme variables */
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--secondary-color);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 600px;
+            box-sizing: border-box;
+            transition: background 0.5s ease, border-color 0.5s ease;
+        }
+
+        .sidebar-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--secondary-color);
+            font-family: var(--font-family-body);
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: rgba(255, 255, 255, 0.8);
+            font-family: var(--font-family-body);
+        }
+
+        .chat-message {
+            margin-bottom: 5px;
+        }
+
+        .chat-message span {
+            color: rgba(255, 255, 255, 0.5);
+            margin-right: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .chat-input input {
+            flex-grow: 1;
+            padding: 8px;
+            background-color: rgba(0,0,0,0.3);
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            color: var(--text-color);
+            font-family: var(--font-family-body);
+            font-size: 0.9rem;
+        }
+
+        .chat-input button {
+            background-color: var(--success-color);
+            color: var(--text-color);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: var(--font-family-body);
+            font-size: 0.9rem;
+        }
+
+        /* New: Game Data Sections (Tabs) */
+        .game-data-sections {
+            width: 100%;
+            background: linear-gradient(145deg, var(--table-row-even), var(--bg-color)); /* Use theme variables */
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--secondary-color);
+            padding: 15px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: background 0.5s ease, border-color 0.5s ease;
+        }
+
+        .online-users-info {
+            text-align: center;
+            font-size: 1rem;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            width: 100%;
+            border-bottom: 2px solid var(--secondary-color);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 0;
+            background-color: var(--tab-bg-inactive);
+            color: var(--text-color);
+            border: none;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            cursor: pointer;
+            font-family: var(--font-family-body);
+            font-size: 1rem;
+            font-weight: 700;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            position: relative;
+            z-index: 1;
+            margin-bottom: -2px; /* Overlap border */
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-button:hover {
+            background-color: var(--tab-bg-active);
+        }
+
+        .tab-button.active {
+            background-color: var(--tab-bg-active);
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--tab-border-active);
+            z-index: 2;
+        }
+
+        .tab-content {
+            padding-top: 15px;
+            min-height: 250px; /* Ensure content area has some height */
+            overflow-y: auto;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* Players Table Styling */
+        .players-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-family-body);
+            font-size: 0.9rem;
+        }
+
+        .players-table th, .players-table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .players-table th {
+            background-color: var(--table-header-bg);
+            color: var(--accent-color);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .players-table tr:nth-child(odd) {
+            background-color: var(--table-row-odd);
+        }
+
+        .players-table tr:nth-child(even) {
+            background-color: var(--table-row-even);
+        }
+
+        .players-table tr.highlighted-player {
+            background-color: var(--table-row-highlight);
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .players-table .player-avatar {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            font-size: 0.8em;
+            text-align: center;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .players-table .amount-cell, .players-table .cashout-cell, .players-table .won-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .players-table .cashout-cell.cashed-out {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        .players-table .cashout-cell.busted {
+            color: var(--danger-color);
+        }
+
+        /* Leaderboard Table */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-family-body);
+            font-size: 0.9rem;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .leaderboard-table th {
+            background-color: var(--table-header-bg);
+            color: var(--accent-color);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .leaderboard-table tr:nth-child(odd) {
+            background-color: var(--table-row-odd);
+        }
+        .leaderboard-table tr:nth-child(even) {
+            background-color: var(--table-row-even);
+        }
+        .leaderboard-table .rank-cell {
+            font-weight: bold;
+            color: var(--accent-color);
+            text-align: center;
+        }
+        .leaderboard-table .multiplier-cell, .leaderboard-table .winnings-cell {
+            text-align: right;
+            font-weight: bold;
+        }
+
+
+        /* History Tab specific styles (re-using crash-history-container styles) */
+        #history-tab-content {
+            padding: 10px;
+            background-color: rgba(13, 71, 161, 0.3);
+            border-radius: 10px;
+            border: 1px solid var(--secondary-color);
+            max-height: 250px;
+            overflow-y: auto;
+            transition: background-color 0.5s ease, border-color 0.5s ease;
+        }
+        #history-tab-content h3 {
+            margin: 0 0 10px 0;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            text-align: center;
+            font-family: var(--font-family-body);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, var(--modal-bg-gradient-start), var(--modal-bg-gradient-end));
+            margin: auto;
+            padding: 20px;
+            border: 2px solid var(--modal-border-color);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-button {
+            color: var(--text-color);
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+
+        .modal-header {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .modal-tab-button {
+            flex: 1;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.2);
+            border: none;
+            color: var(--text-color);
+            font-family: var(--font-family-body);
+            cursor: pointer;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal-tab-button.active {
+            background-color: rgba(0,0,0,0.4);
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .modal-tab-content {
+            padding-top: 15px;
+        }
+
+        .modal-tab-pane {
+            display: none;
+        }
+
+        .modal-tab-pane.active {
+            display: block;
+        }
+
+        .modal-balance-info {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .balance-box {
+            background-color: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .balance-box span {
+            display: block;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .balance-box p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 5px 0 0;
+            color: var(--text-color);
+        }
+        
+        .modal-input-group {
+            margin-bottom: 15px;
+            position: relative; /* For tooltip positioning */
+        }
+        
+        .modal-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--accent-color);
+            font-family: var(--font-family-body);
+        }
+        
+        .modal-input-group input[type="number"],
+        .modal-input-group input[type="text"],
+        .modal-input-group input[type="password"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            background-color: rgba(0,0,0,0.3);
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            color: var(--text-color);
+            font-family: var(--font-family-body);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .modal-button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--success-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal-button:hover {
+            background-color: var(--light-green);
+        }
+
+        .modal-instructions {
+            background-color: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.5;
+        }
+
+        .modal-instructions p {
+            margin: 0 0 8px 0;
+        }
+
+        .modal-instructions strong {
+            color: var(--accent-color);
+        }
+
+        .modal-footer {
+            text-align: right;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            margin-top: 15px;
+        }
+
+        .modal-link {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .modal-link:hover {
+            text-decoration: underline;
+        }
+
+        /* New: Modal Message Display */
+        .modal-message-display {
+            text-align: center;
+            font-size: 0.95rem;
+            min-height: 20px;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            display: none; /* Hidden by default */
+        }
+
+        /* Footer Styles */
+        .footer {
+            width: 100%;
+            background-color: var(--tab-bg-inactive); /* Use theme variable */
+            padding: 20px;
+            margin-top: auto;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            transition: background-color 0.5s ease;
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        .footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: #ffeb3b;
+        }
+
+        /* Floating WhatsApp Button */
+        .whatsapp-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #25D366;
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, background-color 0.2s ease;
+            z-index: 100;
+        }
+
+        .whatsapp-button:hover {
+            transform: scale(1.1);
+            background-color: #1DA851;
+        }
+
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .main-content-area {
+                flex-direction: column;
+                align-items: center;
+            }
+            .game-container, .right-sidebar {
+                width: 95%;
+                max-width: 800px;
+                min-width: unset;
+            }
+            .right-sidebar {
+                margin-top: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .top-bar {
+                padding: 10px;
+                justify-content: center;
+            }
+            .top-bar-left, .top-bar-center {
+                flex-basis: 100%;
+                justify-content: center;
+                gap: 5px;
+            }
+            .site-logo {
+                font-size: 1.3rem;
+            }
+            .top-button {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+            .balance-info {
+                font-size: 0.8rem;
+            }
+
+            .top-banner {
+                flex-direction: column;
+                text-align: center;
+                padding: 10px 15px;
+            }
+            .promo-text-content {
+                align-items: center;
+            }
+            .promo-content {
+                font-size: 1.2rem;
+            }
+            .promo-button {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+            h1 { font-size: 2rem; }
+            .game-screen { height: 300px; }
+            #multiplier-display-overlay { font-size: 3.5rem; }
+            #countdown-timer-overlay { font-size: 4.5rem; }
+            #busted-text-overlay { font-size: 2.2rem; }
+            .button { font-size: 1.2rem; padding: 12px; }
+            .info-box p { font-size: 1.2rem; }
+            .quick-bet-button { font-size: 0.9rem; padding: 6px 10px; max-width: 60px; }
+            
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 5px 0;
+            }
+            .history-item span {
+                width: 100%;
+                text-align: left;
+            }
+            .history-item .bet-amount, .history-item .status {
+                text-align: left;
+            }
+
+            .players-table th, .players-table td {
+                padding: 8px 5px;
+                font-size: 0.8rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 15px;
+            }
+            .modal-header {
+                font-size: 1.5rem;
+            }
+            .modal-tab-button {
+                font-size: 0.9rem;
+            }
+            .balance-box p {
+                font-size: 1.2rem;
+            }
+            .modal-button {
+                font-size: 1rem;
+                padding: 10px;
+            }
+            .modal-instructions {
+                font-size: 0.8rem;
+            }
+            .whatsapp-button {
+                width: 50px;
+                height: 50px;
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <span class="site-logo">Prince Alex Jet</span>
+        </div>
+        <div class="top-bar-center">
+            <button class="top-button" id="auth-button">Login / Sign Up</button>
+            <span class="balance-info" id="top-bar-balance" style="display:none;">1000.00 KES</span>
+            <!-- New: Account Dropdown -->
+            <div class="account-dropdown" id="account-dropdown">
+                <div class="dropdown-header" id="dropdown-user-info"></div>
+                <a href="#" class="dropdown-item" id="dropdown-deposit-withdraw" title="Manage your deposits and withdrawals">
+                    <i class="fas fa-wallet"></i> Deposit / Withdraw
+                </a>
+                <a href="#" class="dropdown-item" id="dropdown-change-password" title="Change your account password">
+                    <i class="fas fa-key"></i> Change Password
+                </a>
+                <a href="#" class="dropdown-item" id="dropdown-how-to-play" title="Learn how to play the game">
+                    <i class="fas fa-question-circle"></i> How To Play
+                </a>
+                <a href="#" class="dropdown-item logout" id="dropdown-logout" title="Log out of your account">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+            <button id="theme-toggle" title="Toggle Dark/Light Theme">
+                <i class="fas fa-sun"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Promotional Banner -->
+    <div class="top-banner">
+        <div class="promo-image-container">
+            <img src="aviator.jpg" onerror="this.onerror=null; this.src='https://placehold.co/120x80/2e7d32/ffffff?text=PROMO+IMG';" alt="Promotional Image" class="promo-image">
+        </div>
+        <div class="promo-text-content">
+            <div class="promo-content">
+                TOP CRASHER PROMO<br>HIGHEST CRASHER AWARDED KES 2,500 HOURLY
+            </div>
+            <button class="promo-button" id="promo-click-button">CLICK HERE</button>
+        </div>
+    </div>
+
+    <div class="main-content-area">
+        <div class="game-container">
+            <!-- The duplicate h1 "Prince Alex Jet" has been removed as requested -->
+
+            <!-- Crash History Container (moved here and made visible) -->
+            <div id="crash-history-container">
+                <h3>Crash History</h3>
+                <div id="crash-history-display"></div>
+            </div>
+
+            <div class="game-screen" id="game-screen">
+                <canvas id="game-canvas"></canvas>
+                <canvas id="confetti-canvas"></canvas> <!-- Confetti Canvas -->
+                <div id="multiplier-display-overlay">1.00x</div>
+                <div id="countdown-timer-overlay">10</div>
+                <div id="busted-text-overlay"></div>
+            </div>
+
+            <div id="message-display">Login to place your bet!</div>
+
+            <div class="controls">
+                <div class="control-panel">
+                    <label for="bet-amount">Bet Amount</label>
+                    <div class="bet-quick-buttons">
+                        <button class="button quick-bet-button" data-bet="10" disabled>10</button>
+                        <button class="button quick-bet-button" data-bet="50" disabled>50</button>
+                        <button class="button quick-bet-button" data-bet="100" disabled>100</button>
+                        <button class="button quick-bet-button" data-bet="200" disabled>200</button>
+                        <button class="button quick-bet-button" data-bet="300" disabled>300</button>
+                        <button class="button quick-bet-button" data-bet="500" disabled>500</button>
+                        <button class="button quick-bet-button" data-bet="3000" disabled>3000</button>
+                    </div>
+                    <input type="number" id="bet-amount" value="10" min="1" disabled>
+                    <button class="button" id="bet-button" disabled>Login to Bet</button>
+
+                    <div class="auto-options">
+                        <label for="auto-cashout-input">Auto Cashout</label>
+                        <input type="number" id="auto-cashout-input" value="1.1" min="1.01" step="0.01" disabled>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="auto-bet-toggle" disabled>
+                            <span class="slider"></span>
+                        </label>
+                        <label for="auto-bet-toggle">Auto Bet</label>
+                    </div>
+                </div>
+                <div class="control-panel">
+                    <label>Cash Out</label>
+                    <button class="button" id="cashout-button" disabled>Cash Out</button>
+                    <!-- Display potential winnings here -->
+                    <p id="potential-win-display" style="font-size:1.2rem; color: var(--accent-color); text-align: center; margin-top: 5px;">0.00</p>
+                </div>
+            </div>
+            
+            <!-- Removed Provably Fair Info section as requested -->
+            
+            <!-- New: Game Data Sections (Tabs) -->
+            <div class="game-data-sections">
+                <div class="online-users-info">
+                    Online Users: <span id="online-users-count">90</span> | Playing: <span id="playing-users-count">31</span>
+                </div>
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="players">Players</button>
+                    <button class="tab-button" data-tab="my-bets">My Bets</button>
+                    <button class="tab-button" data-tab="leaderboard">Leaderboard</button> <!-- New Leaderboard Tab -->
+                </div>
+                <div class="tab-content">
+                    <!-- Players Tab Content -->
+                    <div id="players-tab-pane" class="tab-pane active">
+                        <table class="players-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th class="amount-cell">Amount</th>
+                                    <th class="cashout-cell">Cashout</th>
+                                    <th class="won-cell">Won (KES)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="players-table-body">
+                                <!-- Player rows will be dynamically inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- My Bets Tab Content -->
+                    <div id="my-bets-tab-pane" class="tab-pane">
+                        <div id="player-history-container-tab">
+                            <h3>Your Bet History</h3>
+                            <div id="player-history-display-tab">
+                                <div class="history-item header-row" style="font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.2);">
+                                    <span class="ticket-id">Ticket ID</span>
+                                    <span class="bet-amount">Bet</span>
+                                    <span class="multiplier-info">Multiplier</span>
+                                    <span class="status">Status</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard Tab Content -->
+                    <div id="leaderboard-tab-pane" class="tab-pane">
+                        <h3>Top Crashers (Highest Multiplier)</h3>
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th class="rank-cell">Rank</th>
+                                    <th>Player</th>
+                                    <th class="multiplier-cell">Multiplier</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-multiplier-body">
+                                <!-- Top Multiplier leaders will be dynamically inserted here -->
+                            </tbody>
+                        </table>
+
+                        <h3 style="margin-top: 20px;">Top Earners (Total Winnings)</h3>
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th class="rank-cell">Rank</th>
+                                    <th>Player</th>
+                                    <th class="winnings-cell">Winnings (KES)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-winnings-body">
+                                <!-- Top Winnings leaders will be dynamically inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Sidebar (Chat/History) -->
+        <div class="right-sidebar">
+            <div class="sidebar-header">Chat <i class="fas fa-comments" title="Live Chat"></i></div>
+            <div class="chat-messages" id="chat-messages">
+                <p class="chat-message"><span>00:00</span> Senko Mtato: Welcome to Prince Alex Jet!</p>
+                <p class="chat-message"><span>00:01</span> Nyalez: Good luck everyone!</p>
+            </div>
+            <div class="chat-input">
+                <input type="text" placeholder="Type a message and click Enter" id="chat-input-field">
+                <button id="chat-send-button" title="Send Message">&gt;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit/Withdraw Modal -->
+    <div id="depositWithdrawModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-close="depositWithdrawModal">&times;</span>
+            <div class="modal-header">Wallet | 254717384875</div>
+
+            <div class="modal-balance-info">
+                <div class="balance-box">
+                    <span>Balance</span>
+                    <p id="modal-balance">0.00</p>
+                </div>
+                <div class="balance-box">
+                    <span>Withdrawable</span>
+                    <p id="modal-withdrawable">0.00</p>
+                </div>
+                <div class="balance-box">
+                    <span>Bonus</span>
+                    <p id="modal-bonus">0.00</p>
+                </div>
+            </div>
+
+            <div class="modal-tabs">
+                <button class="modal-tab-button active" data-modal-tab="deposit">Deposit</button>
+                <button class="modal-tab-button" data-modal-tab="withdraw">Withdraw</button>
+                <button class="modal-tab-button" data-modal-tab="verify-deposit">Verify Deposit</button>
+            </div>
+
+            <div class="modal-tab-content">
+                <!-- Deposit Tab Pane -->
+                <div id="deposit-tab-pane" class="modal-tab-pane active">
+                    <div class="modal-input-group">
+                        <label for="deposit-amount">Amount</label>
+                        <input type="number" id="deposit-amount" value="100" min="10">
+                    </div>
+                    <button class="modal-button" id="top-up-now-button">TOP UP NOW</button>
+                    <div class="modal-instructions">
+                        <p><strong>Instructions:</strong></p>
+                        <p>Manual Deposit: Paybill: <strong>710739</strong>, A/c: <strong>0717384875</strong></p>
+                        <p>Minimum amount: 10/-</p>
+                        <p>Maximum amount: 150,000/-</p>
+                        <p>Daily Transaction Limit: 300,000/-</p>
+                    </div>
+                </div>
+
+                <!-- Withdraw Tab Pane -->
+                <div id="withdraw-tab-pane" class="modal-tab-pane">
+                    <div class="modal-input-group">
+                        <label for="withdraw-amount">Amount</label>
+                        <input type="number" id="withdraw-amount" value="100" min="100">
+                    </div>
+                    <p style="font-size:0.85rem; color: rgba(255,255,255,0.7); text-align: center;">Transfer Fee: 5 | To Disburse: <span id="to-disburse">95.00</span></p>
+                    <button class="modal-button" id="withdraw-now-button">WITHDRAW NOW</button>
+                    <div class="modal-instructions">
+                        <p><strong>Instructions:</strong></p>
+                        <p>Minimum Withdrawal amount: 100/-</p>
+                        <p>Maximum Withdrawal amount: 150,000/-</p>
+                        <p>Daily Transaction Limit: 300,000/-</p>
+                        <p><strong>Withholding Tax (WHT):</strong> As provided for by the Income Tax Act, Cap 472, all gaming companies are required to withhold winnings at a rate of 20%. This is the Withholding Tax. In compliance with the law, we will deduct and remit to KRA 20% of all winnings.</p>
+                    </div>
+                </div>
+
+                <!-- Verify Deposit Tab Pane -->
+                <div id="verify-deposit-tab-pane" class="modal-tab-pane">
+                    <div class="modal-input-group">
+                        <label for="mpesa-code">M-PESA CODE</label>
+                        <input type="text" id="mpesa-code" placeholder="-- RD56FR9UGO --">
+                    </div>
+                    <button class="modal-button" id="verify-mpesa-button">VERIFY M-PESA</button>
+                    <div class="modal-instructions">
+                        <p>Copy or type the M-PESA code e.g RD56FR9UGO you received on SMS from M-PESA then click Verify M-PESA.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                For more, call: <a href="tel:0717384875">0717384875</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-close="loginModal">&times;</span>
+            <div class="modal-header">Login to Prince Alex Jet</div>
+            <div class="modal-message-display" id="login-message-display"></div> <!-- New message display -->
+            <div class="modal-input-group">
+                <label for="login-mobile">Mobile</label>
+                <input type="text" id="login-mobile" placeholder="e.g. 0722000000">
+            </div>
+            <div class="modal-input-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password">
+            </div>
+            <button class="modal-button" id="login-button">Login</button>
+            <a href="#" class="modal-link" id="show-signup-link">Don't have an account? Sign Up</a>
+            <a href="#" class="modal-link" id="show-password-reset-link">Forgot Password?</a>
+            <div class="modal-footer">
+                For more, call: <a href="tel:0717384875">0717384875</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign Up Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-close="signupModal">&times;</span>
+            <div class="modal-header">Create Your Account</div>
+            <div class="modal-message-display" id="signup-message-display"></div>
+            <div class="modal-input-group">
+                <label for="signup-mobile">Mobile</label>
+                <input type="text" id="signup-mobile" placeholder="e.g. 0722000000">
+            </div>
+            <div class="modal-input-group">
+                <label for="signup-nickname">Nickname</label>
+                <input type="text" id="signup-nickname" placeholder="e.g. Hot-Crash">
+            </div>
+            <div class="modal-input-group">
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password">
+            </div>
+            <button class="modal-button" id="create-account-button">CREATE ACCOUNT</button>
+            <a href="#" class="modal-link" id="show-login-link">Already have an account? Login</a>
+            <div class="modal-footer">
+                For more, call: <a href="tel:0717384875">0717384875</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Reset Modal -->
+    <div id="passwordResetModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-close="passwordResetModal">&times;</span>
+            <div class="modal-header">Password Reset</div>
+            <div class="modal-message-display" id="password-reset-message-display"></div>
+            <div class="modal-input-group">
+                <label for="reset-mobile">Enter your Mobile Number</label>
+                <input type="text" id="reset-mobile" placeholder="e.g. 0722000000">
+            </div>
+            <button class="modal-button" id="reset-password-button">RESET PASSWORD</button>
+            <a href="#" class="modal-link" id="back-to-login-link">Back to Login</a>
+            <div class="modal-footer">
+                For more, call: <a href="tel:0717384875">0717384875</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- New: Change Password Modal (for logged-in users) -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-close="changePasswordModal">&times;</span>
+            <div class="modal-header">Change Password</div>
+            <div class="modal-message-display" id="change-password-message-display"></div>
+            <div class="modal-input-group">
+                <label for="current-password">Current Password</label>
+                <input type="password" id="current-password">
+            </div>
+            <div class="modal-input-group">
+                <label for="new-password">New Password</label>
+                <input type="password" id="new-password">
+            </div>
+            <div class="modal-input-group">
+                <label for="confirm-new-password">Confirm New Password</label>
+                <input type="password" id="confirm-new-password">
+            </div>
+            <button class="modal-button" id="update-password-button">UPDATE PASSWORD</button>
+            <div class="modal-footer">
+                For more, call: <a href="tel:0717384875">0717384875</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- New: How To Play Modal -->
+    <div id="howToPlayModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" data-modal-close="howToPlayModal">&times;</span>
+            <div class="modal-header">How To Play Prince Alex Jet</div>
+            <div class="modal-instructions" style="text-align: left;">
+                <p>Welcome to Prince Alex Jet, the thrilling crash game where you predict how high the jet will fly before it crashes!</p>
+                <p><strong>How to Play:</strong></p>
+                <ol>
+                    <li><strong>Place Your Bet:</strong> Before each round starts (during the 10-second countdown), enter your desired bet amount in the "Bet Amount" field or use the quick bet buttons.</li>
+                    <li><strong>Set Auto Cashout (Optional):</strong> You can set an "Auto Cashout" multiplier. If the jet reaches this multiplier, your bet will automatically cash out.</li>
+                    <li><strong>Auto Bet (Optional):</strong> Enable "Auto Bet" to automatically place your bet in subsequent rounds.</li>
+                    <li><strong>Watch the Jet Fly:</strong> Once the round begins, the jet takes off, and the multiplier starts increasing from 1.00x.</li>
+                    <li><strong>Cash Out:</strong> Click the "Cash Out" button at any time before the jet crashes to secure your winnings. Your winnings are calculated as: <strong>Bet Amount x Multiplier at Cashout</strong>.</li>
+                    <li><strong>The Crash:</strong> If the jet crashes before you cash out, you lose your bet for that round.</li>
+                    <li><strong>Winning & Losing:</strong>
+                        <ul>
+                            <li><strong>Win:</strong> You cash out successfully before the crash.</li>
+                            <li><strong>Loss:</strong> The jet crashes before you cash out.</li>
+                        </ul>
+                    </li>
+                    <li><strong>History:</strong> Check the "Crash History" for past multipliers and "My Bets" for your personal game history.</li>
+                    <li><strong>Chat:</strong> Interact with other players in the live chat.</li>
+                </ol>
+                <p>Good luck and have fun flying with Prince Alex Jet!</p>
+            </div>
+            <div class="modal-footer">
+                For more, call: <a href="tel:0717384875">0717384875</a>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2024 Prince Alex Jet. All rights reserved.</p>
+        <p>For support, contact us at <a href="tel:0717384875">0717384875</a> or email <a href="mailto:support@princealexjet.com">support@princealexjet.com</a></p>
+        <p><a href="#">Terms & Conditions</a> | <a href="#">Privacy Policy</a></p>
+    </div>
+
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/254717384875" target="_blank" class="whatsapp-button" title="Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script defer>
+        // --- Graphing constants ---
+        const PADDING_X = 50;
+        const PADDING_Y = 50;
+        const MAX_GAME_TICKS_X_SCALE = 200; // Max game ticks to show on X-axis (20 seconds at 100ms/tick)
+        const Y_AXIS_BREAKPOINTS = [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0];
+        let dynamicMaxMultiplierY = 10.0; // Initial max Y-axis value for graph display
+
+        // --- Starfield constants ---
+        const STARS_COUNT = 100;
+        const stars = [];
+
+        // --- DOM Elements ---
+        const gameCanvas = document.getElementById('game-canvas');
+        const ctx = gameCanvas.getContext('2d');
+        const confettiCanvas = document.getElementById('confetti-canvas'); // Confetti canvas
+        const confettiCtx = confettiCanvas.getContext('2d'); // Confetti context
+        const multiplierDisplayOverlay = document.getElementById('multiplier-display-overlay');
+        const countdownTimerOverlay = document.getElementById('countdown-timer-overlay');
+        const bustedTextOverlay = document.getElementById('busted-text-overlay');
+
+        const betButton = document.getElementById('bet-button');
+        const cashoutButton = document.getElementById('cashout-button');
+        const betAmountInput = document.getElementById('bet-amount');
+        const messageDisplay = document.getElementById('message-display'); // Main game message display
+        const quickBetButtons = document.querySelectorAll('.quick-bet-button');
+        const autoBetToggle = document.getElementById('auto-bet-toggle');
+        const autoCashoutInput = document.getElementById('auto-cashout-input');
+        
+        const potentialWinDisplay = document.getElementById('potential-win-display'); 
+        
+        // Top Bar Elements
+        const authButton = document.getElementById('auth-button'); 
+        const topBarBalance = document.getElementById('top-bar-balance');
+        const promoClickButton = document.getElementById('promo-click-button'); 
+        const themeToggle = document.getElementById('theme-toggle'); // Theme toggle button
+        
+        // New Account Dropdown Elements
+        const accountDropdown = document.getElementById('account-dropdown');
+        const dropdownUserInfo = document.getElementById('dropdown-user-info');
+        const dropdownDepositWithdraw = document.getElementById('dropdown-deposit-withdraw');
+        const dropdownChangePassword = document.getElementById('dropdown-change-password');
+        const dropdownHowToPlay = document.getElementById('dropdown-how-to-play');
+        const dropdownLogout = document.getElementById('dropdown-logout');
+
+        // Chat Elements
+        const chatMessagesDiv = document.getElementById('chat-messages');
+        const chatInputField = document.getElementById('chat-input-field');
+        const chatSendButton = document.getElementById('chat-send-button'); 
+
+        // New Tab Elements
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        const onlineUsersCount = document.getElementById('online-users-count');
+        const playingUsersCount = document.getElementById('playing-users-count');
+        const playersTableBody = document.getElementById('players-table-body');
+        const playerHistoryDisplayTab = document.getElementById('player-history-display-tab'); 
+        const crashHistoryDisplay = document.getElementById('crash-history-display'); 
+        const leaderboardMultiplierBody = document.getElementById('leaderboard-multiplier-body'); // Leaderboard elements
+        const leaderboardWinningsBody = document.getElementById('leaderboard-winnings-body');
+
+        // Modals
+        const depositWithdrawModal = document.getElementById('depositWithdrawModal');
+        const loginModal = document.getElementById('loginModal');
+        const signupModal = document.getElementById('signupModal');
+        const passwordResetModal = document.getElementById('passwordResetModal'); 
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        const howToPlayModal = document.getElementById('howToPlayModal');
+        const allCloseModalButtons = document.querySelectorAll('.close-button'); 
+        const loadingOverlay = document.getElementById('loading-overlay'); // Loading spinner overlay
+
+        // Deposit/Withdraw Modal Elements
+        const modalTabButtons = depositWithdrawModal.querySelectorAll('.modal-tab-button');
+        const modalTabPanes = depositWithdrawModal.querySelectorAll('.modal-tab-pane');
+        const modalBalance = document.getElementById('modal-balance');
+        const modalWithdrawable = document.getElementById('modal-withdrawable');
+        const modalBonus = document.getElementById('modal-bonus');
+        const depositAmountInput = document.getElementById('deposit-amount');
+        const topUpNowButton = document.getElementById('top-up-now-button');
+        const withdrawAmountInput = document.getElementById('withdraw-amount');
+        const toDisburseSpan = document.getElementById('to-disburse');
+        const withdrawNowButton = document.getElementById('withdraw-now-button');
+        const mpesaCodeInput = document.getElementById('mpesa-code');
+        const verifyMpesaButton = document.getElementById('verify-mpesa-button');
+
+        // Login Modal Elements
+        const loginMobileInput = document.getElementById('login-mobile');
+        const loginPasswordInput = document.getElementById('login-password');
+        const loginButton = document.getElementById('login-button');
+        const showSignupLink = document.getElementById('show-signup-link');
+        const showPasswordResetLink = document.getElementById('show-password-reset-link'); 
+        const loginMessageDisplay = document.getElementById('login-message-display'); 
+
+        // Sign Up Modal Elements
+        const signupMobileInput = document.getElementById('signup-mobile');
+        const signupNicknameInput = document.getElementById('signup-nickname');
+        const signupPasswordInput = document.getElementById('signup-password');
+        const createAccountButton = document.getElementById('create-account-button');
+        const showLoginLink = document.getElementById('show-login-link');
+        const signupMessageDisplay = document.getElementById('signup-message-display'); 
+
+        // Password Reset Modal Elements
+        const resetMobileInput = document.getElementById('reset-mobile'); 
+        const resetPasswordButton = document.getElementById('reset-password-button'); 
+        const backToLoginLink = document.getElementById('back-to-login-link'); 
+        const passwordResetMessageDisplay = document.getElementById('password-reset-message-display'); 
+
+        // Change Password Modal Elements
+        const currentPasswordInput = document.getElementById('current-password');
+        const newPasswordInput = document.getElementById('new-password');
+        const confirmNewPasswordInput = document.getElementById('confirm-new-password');
+        const updatePasswordButton = document.getElementById('update-password-button');
+        const changePasswordMessageDisplay = document.getElementById('change-password-message-display');
+
+
+        // --- Game State ---
+        let balance = parseFloat(localStorage.getItem('princeAlexJetBalance')) || 1000;
+        let betAmount = parseFloat(localStorage.getItem('princeAlexJetBetAmount')) || 10; 
+        let multiplier = 1.00;
+        let crashMultiplier = 1.00;
+        let isGameRunning = false; 
+        let hasCashedOut = false; 
+        let gameLoopInterval = null; 
+        let isAutoBetEnabled = JSON.parse(localStorage.getItem('princeAlexJetAutoBetEnabled')) || false;
+        let currentBetPlaced = 0; 
+        let roundCountdownInterval = null; 
+        let preRoundTimer = 0; 
+        const crashHistory = JSON.parse(localStorage.getItem('princeAlexJetCrashHistory')) || []; 
+        const MAX_HISTORY_ITEMS = 10; 
+
+        const playerBetHistory = JSON.parse(localStorage.getItem('princeAlexJetPlayerBetHistory')) || []; 
+        let currentTicketId = null; 
+
+        let curvePoints = [{ x: 0, y: 0 }]; 
+        let gameTicks = 0; 
+
+        // Authentication State
+        let isLoggedIn = JSON.parse(localStorage.getItem('princeAlexJetIsLoggedIn')) || false;
+        let currentUserId = localStorage.getItem('princeAlexJetCurrentUserId') || null; // Mobile number
+        let currentUserNickname = localStorage.getItem('princeAlexJetCurrentUserNickname') || null;
+        let simulatedUsers = JSON.parse(localStorage.getItem('princeAlexJetSimulatedUsers')) || []; // Array of {mobile, nickname, password, balance}
+
+        // Provably Fair Seeds and Nonce
+        let serverSeed = localStorage.getItem('princeAlexJetServerSeed') || generateRandomString(32); // Generate on load, persist for session
+        const clientSeed = "player-alex"; // Fixed client seed
+        let nonce = parseInt(localStorage.getItem('princeAlexJetNonce')) || 0; // Nonce persists and increments
+
+        // Simulated Player Names (expanded list)
+        const allPlayerNames = [
+            "JulianaH123", "Josemwai", "Josephwainaina", "FunnyDiudi", "Cheche", "BlackHawk", "EatPeople", "Amanda",
+            "BraveHeart", "LuckyCharm", "QuickCash", "GameMaster", "CryptoKing", "JetSetter", "HighRoller", "BetBoss",
+            "WinStreak", "FlyHigh", "CashFlow", "AcePilot", "SkyWalker", "GoldenWings", "TopGun", "FastCash",
+            "MoneyMaker", "RiskTaker", "FortuneHunter", "PixelPusher", "CodeBreaker", "DataMiner", "NetNinja",
+            "WebWizard", "ByteBuddy", "LogicLord", "AlgoAce", "ScriptKid", "HashHero", "TokenTitan", "BlockChamp",
+            "ChainLink", "QuantumQuinn", "CyberSamurai", "DigitalDiva", "VirtualViking", "ElectricEagle", "SolarSailor",
+            "CosmicCat", "StarGazer", "MoonRider", "GalaxyGamer", "CometCrusher", "NebulaNomad", "PlasmaPilot",
+            "OrbitOgre", "AstroAce", "ZenithZephyr", "PulsarPrince", "NovaKnight", "Supernova", "DarkMatter",
+            "LightSpeed", "Infinity", "Horizon", "Vortex", "Echo", "Mirage", "Phoenix", "Titan", "Olympus",
+            "Atlantis", "ElDorado", "ShangriLa", "Xanadu", "Camelot", "Avalon", "Asgard", "Valhalla", "Olympia",
+            "Zion", "Eden", "Utopia", "Arcadia", "Elysium", "Pandora", "Nirvana", "Genesis", "Exodus", "Odyssey",
+            "Voyager", "Pathfinder", "Explorer", "Pioneer", "Navigator", "Sentinel", "Guardian", "Vigilante",
+            "Shadow", "Phantom", "Specter", "Ghost", "Ninja", "Samurai", "Ronin", "Sensei", "Master", "Legend"
+        ];
+        
+        // Simulated Player Data for "Players" tab
+        const simulatedPlayers = []; 
+        const NUM_SIMULATED_PLAYERS = 15; 
+
+        let baseOnlineUsers = 90; // Starting baseline for online users
+        let onlineUsersFluctuationInterval = null; // Interval for fluctuating online users
+
+        // Airplane SVG path (simple representation)
+        const airplanePath = new Path2D("M20 0 L0 10 L0 12 L8 12 L8 20 L10 20 L10 12 L18 12 L18 10 L20 0 Z"); 
+
+        // Sound Effects
+        let gameStartSynth, cashoutSynth, crashSynth;
+        let isSoundInitialized = false;
+
+        function initializeAudio() {
+            if (isSoundInitialized) return;
+            Tone.start(); // Start Tone.js audio context
+            gameStartSynth = new Tone.Synth({
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.05, decay: 0.1, sustain: 0.2, release: 0.5 }
+            }).toDestination();
+            cashoutSynth = new Tone.Synth({
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.02, decay: 0.1, sustain: 0.1, release: 0.2 }
+            }).toDestination();
+            crashSynth = new Tone.NoiseSynth({
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.3 }
+            }).toDestination();
+            isSoundInitialized = true;
+            console.log("Audio context initialized.");
+        }
+
+        /**
+         * Generates a random alphanumeric string for seeds.
+         * @param {number} length - The desired length of the string.
+         * @returns {string} A random alphanumeric string.
+         */
+        function generateRandomString(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        /**
+         * Provably Fair Crash Multiplier Function.
+         * This function converts an HMAC SHA256 hash into a crash multiplier.
+         * The formula ensures a minimum of 1.00x and a distribution that can go very high.
+         * @returns {number} The calculated crash multiplier.
+         */
+        function getCrashMultiplier() {
+            nonce++; // Increment nonce for each new round
+            localStorage.setItem('princeAlexJetNonce', nonce.toString()); // Persist nonce
+
+            // Ensure CryptoJS is loaded before use
+            if (typeof CryptoJS === 'undefined' || !CryptoJS.HmacSHA256) {
+                console.error("CryptoJS not loaded. Cannot generate provably fair multiplier.");
+                return 1.00; // Fallback to 1.00x if crypto is not available
+            }
+
+            // Generate HMAC SHA256 hash using the nonce, client seed, and server seed
+            const hmac = CryptoJS.HmacSHA256(`${nonce}:${clientSeed}`, serverSeed).toString();
+
+            // Take the first 13 characters of the hash for the main crash calculation.
+            // A 13-character hex string gives 52 bits of entropy, which is sufficient for JS numbers (53-bit integers).
+            const hex = hmac.substring(0, 13);
+            const intVal = parseInt(hex, 16);
+
+            // Calculate the maximum possible value for a 13-character hex number.
+            // This is used to normalize the intVal to a float between 0 and 1.
+            const max13Hex = 0xFFFFFFFFFFFFF; // Represents 16^13 - 1
+
+            // Normalize intVal to a float between 0 and 1 (exclusive of 1).
+            // Adding 1 to max13Hex creates a range [0, 1).
+            let normalized = intVal / (max13Hex + 1);
+
+            // Ensure 'normalized' is strictly less than 1 to prevent division by zero or infinity.
+            if (normalized >= 1) {
+                normalized = 0.9999999999999999; // Set to the largest possible float less than 1
+            }
+
+            // Apply the crash game formula: C = 100 / (100 - (normalized * 99))
+            // This formula maps a [0, 1) random number to a crash point from 1.00x to infinity.
+            // If normalized is 0, C = 100 / (100 - 0) = 1.00
+            // If normalized is close to 1 (e.g., 0.9999...), C becomes very large.
+            const crash = 100 / (100 - (normalized * 99));
+
+            // Simulate a 1% chance of an instant bust at 1.00x.
+            // This check uses a different part of the hash (14th hex character)
+            // to avoid interfering with the main crash calculation's distribution.
+            const bustCheckHex = hmac.substring(13, 14);
+            const bustCheckInt = parseInt(bustCheckHex, 16);
+            if (bustCheckInt % 100 < 1) { // Approximately 1% chance
+                return 1.00;
+            }
+
+            // Ensure the minimum crash multiplier is 1.00x and format to 2 decimal places.
+            return Math.max(1.00, parseFloat(crash.toFixed(2)));
+        }
+
+
+        /**
+         * Saves current game data to localStorage.
+         */
+        function saveGameData() {
+            localStorage.setItem('princeAlexJetBalance', balance.toFixed(2));
+            localStorage.setItem('princeAlexJetBetAmount', betAmountInput.value);
+            localStorage.setItem('princeAlexJetAutoBetEnabled', JSON.stringify(isAutoBetEnabled));
+            localStorage.setItem('princeAlexJetAutoCashoutValue', autoCashoutInput.value);
+            localStorage.setItem('princeAlexJetCrashHistory', JSON.stringify(crashHistory));
+            localStorage.setItem('princeAlexJetPlayerBetHistory', JSON.stringify(playerBetHistory));
+            localStorage.setItem('princeAlexJetIsLoggedIn', JSON.stringify(isLoggedIn));
+            localStorage.setItem('princeAlexJetCurrentUserId', currentUserId);
+            localStorage.setItem('princeAlexJetCurrentUserNickname', currentUserNickname);
+            localStorage.setItem('princeAlexJetSimulatedUsers', JSON.stringify(simulatedUsers));
+            localStorage.setItem('princeAlexJetTheme', document.body.classList.contains('light-theme') ? 'light' : 'dark'); // Save theme
+            localStorage.setItem('princeAlexJetServerSeed', serverSeed); // Save server seed
+            localStorage.setItem('princeAlexJetNonce', nonce.toString()); // Save nonce
+            console.log("saveGameData: Data saved to localStorage.");
+            console.log("simulatedUsers after save:", simulatedUsers);
+        }
+
+        /**
+         * Loads game data from localStorage.
+         */
+        function loadGameData() {
+            console.log("loadGameData: Attempting to load data from localStorage.");
+            // Balance
+            const storedBalance = localStorage.getItem('princeAlexJetBalance');
+            if (storedBalance !== null) {
+                balance = parseFloat(storedBalance);
+            } else {
+                balance = 1000; // Default if nothing stored
+            }
+
+            // Bet Amount
+            const storedBetAmount = localStorage.getItem('princeAlexJetBetAmount');
+            if (storedBetAmount !== null) {
+                betAmount = parseFloat(storedBetAmount);
+                betAmountInput.value = betAmount;
+            } else {
+                betAmount = 10; // Default
+                betAmountInput.value = 10;
+            }
+
+            // Auto Bet Enabled
+            const storedAutoBetEnabled = localStorage.getItem('princeAlexJetAutoBetEnabled');
+            if (storedAutoBetEnabled !== null) {
+                isAutoBetEnabled = JSON.parse(storedAutoBetEnabled);
+                autoBetToggle.checked = isAutoBetEnabled;
+            } else {
+                isAutoBetEnabled = false; // Default
+                autoBetToggle.checked = false;
+            }
+
+            // Auto Cashout Value
+            const storedAutoCashoutValue = localStorage.getItem('princeAlexJetAutoCashoutValue');
+            if (storedAutoCashoutValue !== null) {
+                autoCashoutInput.value = parseFloat(storedAutoCashoutValue);
+            } else {
+                autoCashoutInput.value = 1.1; // Default
+            }
+
+            // Crash History
+            const storedCrashHistory = localStorage.getItem('princeAlexJetCrashHistory');
+            if (storedCrashHistory !== null) {
+                crashHistory.length = 0; // Clear existing array
+                JSON.parse(storedCrashHistory).forEach(item => crashHistory.push(item));
+            } else {
+                crashHistory.length = 0; // Empty by default
+            }
+
+            // Player Bet History
+            const storedPlayerBetHistory = localStorage.getItem('princeAlexJetPlayerBetHistory');
+            if (storedPlayerBetHistory !== null) {
+                playerBetHistory.length = 0; // Clear existing array
+                JSON.parse(storedPlayerBetHistory).forEach(item => playerBetHistory.push(item));
+            } else {
+                playerBetHistory.length = 0; // Empty by default
+            }
+
+            // Authentication State
+            const storedIsLoggedIn = localStorage.getItem('princeAlexJetIsLoggedIn');
+            if (storedIsLoggedIn !== null) {
+                isLoggedIn = JSON.parse(storedIsLoggedIn);
+            } else {
+                isLoggedIn = false;
+            }
+
+            currentUserId = localStorage.getItem('princeAlexJetCurrentUserId');
+            currentUserNickname = localStorage.getItem('princeAlexJetCurrentUserNickname');
+
+            const storedSimulatedUsers = localStorage.getItem('princeAlexJetSimulatedUsers');
+            if (storedSimulatedUsers !== null) {
+                simulatedUsers.length = 0;
+                JSON.parse(storedSimulatedUsers).forEach(user => simulatedUsers.push(user));
+            } else {
+                simulatedUsers.length = 0; // Empty by default
+            }
+
+            // Load Theme
+            const savedTheme = localStorage.getItem('princeAlexJetTheme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            } else {
+                document.body.classList.remove('light-theme');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+
+            // Load Provably Fair data
+            const storedServerSeed = localStorage.getItem('princeAlexJetServerSeed');
+            if (storedServerSeed !== null) {
+                serverSeed = storedServerSeed;
+            } else {
+                serverSeed = generateRandomString(32); // Generate a new one if not found
+                localStorage.setItem('princeAlexJetServerSeed', serverSeed);
+            }
+
+            const storedNonce = localStorage.getItem('princeAlexJetNonce');
+            if (storedNonce !== null) {
+                nonce = parseInt(storedNonce);
+            } else {
+                nonce = 0;
+            }
+
+            console.log("simulatedUsers after load:", simulatedUsers);
+            console.log("isLoggedIn after load:", isLoggedIn);
+            console.log("currentUserId after load:", currentUserId);
+            console.log("currentUserNickname after load:", currentUserNickname);
+        }
+
+        /**
+         * Updates the UI elements based on the current authentication state.
+         */
+        function updateAuthUI() {
+            console.log("updateAuthUI called. isLoggedIn:", isLoggedIn);
+            if (isLoggedIn) {
+                authButton.textContent = 'Account'; // Change button text to "Account"
+                authButton.onclick = () => {
+                    // Toggle visibility of the account dropdown
+                    accountDropdown.classList.toggle('show');
+                    if (accountDropdown.classList.contains('show')) {
+                        dropdownUserInfo.textContent = `${currentUserNickname} | ${currentUserId}`;
+                    }
+                };
+                topBarBalance.style.display = 'inline-block';
+                topBarBalance.textContent = `${balance.toFixed(2)} KES`;
+                
+                // Enable betting controls
+                betButton.disabled = false;
+                betButton.textContent = 'Bet [Next Game]';
+                betButton.style.backgroundColor = 'var(--success-color)';
+                betButton.style.cursor = 'pointer';
+                betAmountInput.disabled = false;
+                quickBetButtons.forEach(btn => btn.disabled = false);
+                autoCashoutInput.disabled = false; // Enable auto cashout input
+                autoBetToggle.disabled = false; // Enable auto bet toggle
+
+                // Set auto-bet toggle state
+                autoBetToggle.checked = isAutoBetEnabled; // Reflect current auto-bet state
+                // If auto-bet is enabled, disable manual bet controls
+                if (isAutoBetEnabled) {
+                    betButton.disabled = true;
+                    betButton.textContent = 'Auto Bet Active';
+                    betButton.style.backgroundColor = '#555';
+                    betAmountInput.disabled = true;
+                    quickBetButtons.forEach(btn => btn.disabled = true);
+                }
+                messageDisplay.textContent = 'Place your bet to start the round!';
+                messageDisplay.style.color = 'white';
+
+            } else {
+                authButton.textContent = 'Login / Sign Up';
+                authButton.onclick = () => {
+                    console.log("Auth button clicked: Opening login modal.");
+                    showModal(loginModal); // Use new showModal function
+                    loginMessageDisplay.textContent = ''; // Clear message on open
+                };
+                topBarBalance.style.display = 'none';
+                accountDropdown.classList.remove('show'); // Hide dropdown if not logged in
+
+                // Disable betting controls
+                betButton.disabled = true;
+                betButton.textContent = 'Login to Bet';
+                betButton.style.backgroundColor = '#555';
+                betAmountInput.disabled = true;
+                quickBetButtons.forEach(btn => btn.disabled = true);
+                cashoutButton.disabled = true;
+                autoCashoutInput.disabled = true;
+                autoBetToggle.disabled = true;
+                messageDisplay.textContent = 'Login to place your bet!';
+                messageDisplay.style.color = 'var(--accent-color)';
+            }
+            updateOnlineAndPlayingCounts(); // Update counts based on login state
+        }
+
+        /**
+         * Converts a multiplier value to a canvas Y coordinate.
+         * @param {number} mult - The multiplier value.
+         * @returns {number} The corresponding Y coordinate on the canvas.
+         */
+        function multToY(mult) {
+            const graphHeight = gameCanvas.height - 2 * PADDING_Y;
+            const scaledMult = Math.max(1, mult);
+            // Use dynamicMaxMultiplierY for scaling
+            return gameCanvas.height - PADDING_Y - ((scaledMult - 1) / (dynamicMaxMultiplierY - 1)) * graphHeight;
+        }
+
+        /**
+         * Converts game ticks to a canvas X coordinate.
+         * @param {number} ticks - The number of game ticks.
+         * @returns {number} The corresponding X coordinate on the canvas.
+         */
+        function ticksToX(ticks) {
+            const graphWidth = gameCanvas.width - 2 * PADDING_X;
+            return PADDING_X + (ticks / MAX_GAME_TICKS_X_SCALE) * graphWidth;
+        }
+
+        /**
+         * Initializes the starfield for the canvas background.
+         */
+        function initStars() {
+            stars.length = 0; // Clear existing stars
+            for (let i = 0; i < STARS_COUNT; i++) {
+                stars.push({
+                    x: Math.random() * gameCanvas.width,
+                    y: Math.random() * gameCanvas.height,
+                    radius: Math.random() * 1.5 + 0.5, // 0.5 to 2.0
+                    alpha: Math.random() * 0.5 + 0.5 // 0.5 to 1.0
+                });
+            }
+        }
+
+        /**
+         * Draws the graph, including axes, labels, and the flight curve.
+         */
+        function drawGraph() {
+            ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height); // Clear the entire canvas
+
+            // Draw stars background
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+                ctx.fill();
+            });
+
+            // Set line styles for grid/axes
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.font = '14px var(--font-family-body)';
+            ctx.fillStyle = 'var(--text-color)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const graphWidth = gameCanvas.width - 2 * PADDING_X;
+            const graphHeight = gameCanvas.height - 2 * PADDING_Y;
+
+            // Draw X-axis
+            ctx.beginPath();
+            ctx.moveTo(PADDING_X, gameCanvas.height - PADDING_Y);
+            ctx.lineTo(gameCanvas.width - PADDING_X, gameCanvas.height - PADDING_Y);
+            ctx.stroke();
+
+            // Draw Y-axis
+            ctx.beginPath();
+            ctx.moveTo(PADDING_X, PADDING_Y);
+            ctx.lineTo(PADDING_X, gameCanvas.height - PADDING_Y);
+            ctx.stroke();
+
+            // Draw X-axis labels and grid lines (0, 2, 4, 6, 8 seconds/ticks)
+            for (let i = 0; i <= 8; i += 2) {
+                const x = ticksToX(i * (MAX_GAME_TICKS_X_SCALE / 8));
+                ctx.fillText(i, x, gameCanvas.height - PADDING_Y / 2);
+                ctx.beginPath();
+                ctx.moveTo(x, gameCanvas.height - PADDING_Y);
+                ctx.lineTo(x, PADDING_Y);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.stroke();
+            }
+
+            // Draw Y-axis labels and grid lines dynamically
+            let labelStep = 1; // Default step for labels (e.g., 1.0x, 2.0x)
+            if (dynamicMaxMultiplierY >= 100) labelStep = 100;
+            else if (dynamicMaxMultiplierY >= 50) labelStep = 10;
+            else if (dynamicMaxMultiplierY >= 20) labelStep = 5;
+            else if (dynamicMaxMultiplierY >= 5) labelStep = 1;
+            else labelStep = 0.5; // For smaller multipliers like 1.0, 1.5, 2.0
+
+            for (let i = 1; i <= dynamicMaxMultiplierY; i += labelStep) {
+                const mult = parseFloat(i.toFixed(1)); // Ensure labels are clean floats
+                const y = multToY(mult);
+                if (y >= PADDING_Y && y <= gameCanvas.height - PADDING_Y) { // Only draw if within bounds
+                    ctx.fillText(`${mult.toFixed(1)}x`, PADDING_X / 2, y);
+                    ctx.beginPath();
+                    ctx.moveTo(PADDING_X, y);
+                    ctx.lineTo(gameCanvas.width - PADDING_X, y);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                    ctx.stroke();
+                }
+            }
+
+
+            // Draw the filled area below the curve
+            if (curvePoints.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(PADDING_X, gameCanvas.height - PADDING_Y); // Start at bottom-left of graph area
+                curvePoints.forEach(point => ctx.lineTo(point.x, point.y));
+                // Close the path by drawing down to the X-axis and back to the start
+                const lastPoint = curvePoints[curvePoints.length - 1];
+                ctx.lineTo(lastPoint.x, gameCanvas.height - PADDING_Y);
+                ctx.closePath();
+
+                // Create a linear gradient for the fill
+                const gradient = ctx.createLinearGradient(0, PADDING_Y, 0, gameCanvas.height - PADDING_Y);
+                gradient.addColorStop(0, varToRgba('--graph-fill-color-top'));
+                gradient.addColorStop(1, varToRgba('--graph-fill-color-bottom'));
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            }
+
+            // Draw the flight curve (line)
+            if (curvePoints.length > 1) {
+                ctx.beginPath();
+                ctx.strokeStyle = varToRgba('--graph-line-color'); // Red line
+                ctx.lineWidth = 3;
+                ctx.moveTo(curvePoints[0].x, curvePoints[0].y);
+                for (let i = 1; i < curvePoints.length; i++) {
+                    ctx.lineTo(curvePoints[i].x, curvePoints[i].y);
+                }
+                ctx.stroke();
+
+                // Draw the airplane at the end of the line if game is running
+                if (isGameRunning) {
+                    const lastPoint = curvePoints[curvePoints.length - 1];
+                    const prevPoint = curvePoints[curvePoints.length - 2] || curvePoints[0];
+
+                    // Calculate angle for airplane rotation
+                    const angle = Math.atan2(lastPoint.y - prevPoint.y, lastPoint.x - prevPoint.x);
+
+                    ctx.save(); // Save current canvas state
+                    ctx.translate(lastPoint.x, lastPoint.y); // Move origin to the end of the line
+                    ctx.rotate(angle); // Rotate to align with the line's slope
+                    ctx.fillStyle = 'white'; // Color of the airplane
+                    ctx.scale(0.8, 0.8); // Adjust size of the airplane
+                    ctx.fill(airplanePath); // Draw the airplane
+                    ctx.restore(); // Restore canvas state
+                }
+            }
+
+            // Draw "Connection: ON" text
+            ctx.font = '12px var(--font-family-body)';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom'; // Align to bottom for precise placement
+            ctx.fillText('Connection: ON', PADDING_X, gameCanvas.height - 10); // 10px from bottom
+        }
+
+        /**
+         * Helper function to convert CSS variable to RGBA for canvas.
+         */
+        function varToRgba(cssVar) {
+            const style = getComputedStyle(document.documentElement);
+            return style.getPropertyValue(cssVar).trim();
+        }
+
+
+        /**
+         * Initializes the UI elements to their default state for a new pre-round.
+         * This function enables betting controls and resets visual elements.
+         */
+        function initializeUIForPreRound() {
+            // Update top bar balance
+            topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
+            betAmountInput.value = betAmount; // Set input to last chosen bet or default
+            cashoutButton.disabled = true;
+            potentialWinDisplay.textContent = '0.00'; // Reset potential win display
+            
+            // Enable bet controls for pre-round ONLY IF LOGGED IN
+            if (isLoggedIn) {
+                betButton.disabled = false;
+                betButton.textContent = 'Bet [Next Game]'; // Change text to reflect pre-round state
+                betButton.style.backgroundColor = 'var(--success-color)';
+                betButton.style.cursor = 'pointer';
+                betAmountInput.disabled = false;
+                quickBetButtons.forEach(btn => btn.disabled = false);
+                autoCashoutInput.disabled = false; // Enable auto cashout input
+                autoBetToggle.disabled = false; // Enable auto bet toggle
+
+                // Set auto-bet toggle state
+                autoBetToggle.checked = isAutoBetEnabled; // Reflect current auto-bet state
+                // If auto-bet is enabled, disable manual bet controls
+                if (isAutoBetEnabled) {
+                    betButton.disabled = true;
+                    betButton.textContent = 'Auto Bet Active';
+                    betButton.style.backgroundColor = '#555';
+                    betAmountInput.disabled = true;
+                    quickBetButtons.forEach(btn => btn.disabled = true);
+                }
+                messageDisplay.textContent = 'Next round starts in ' + preRoundTimer + ' seconds. Place your bets!';
+                messageDisplay.style.color = 'white';
+
+            } else {
+                // Keep betting controls disabled if not logged in
+                betButton.disabled = true;
+                betButton.textContent = 'Login to Bet';
+                betButton.style.backgroundColor = '#555';
+                betAmountInput.disabled = true;
+                quickBetButtons.forEach(btn => btn.disabled = true);
+                autoCashoutInput.disabled = true;
+                autoBetToggle.disabled = true;
+                messageDisplay.textContent = 'Login to place your bet!';
+                messageDisplay.style.color = 'var(--accent-color)';
+            }
+
+            resetAnimation(); // Reset graph and multiplier display
+            currentBetPlaced = 0; // Reset bet for the upcoming round
+            currentTicketId = null; // Reset ticket ID
+            countdownTimerOverlay.style.display = 'block'; // Show countdown timer
+            multiplierDisplayOverlay.style.display = 'none'; // Hide multiplier during countdown
+            bustedTextOverlay.style.display = 'none'; // Hide busted text
+
+            // Reset and re-populate simulated players for new round with new names and stakes
+            simulatedPlayers.length = 0; // Clear existing players
+            const usedNames = new Set(); // To ensure unique names
+            while (simulatedPlayers.length < NUM_SIMULATED_PLAYERS) {
+                const randomName = allPlayerNames[Math.floor(Math.random() * allPlayerNames.length)];
+                if (!usedNames.has(randomName)) {
+                    usedNames.add(randomName);
+                    // Random bet between 50 and 3000
+                    const randomBet = Math.floor(Math.random() * (3000 - 50 + 1)) + 50; 
+                    simulatedPlayers.push({
+                        id: crypto.randomUUID(), // Unique ID for simulated players
+                        name: randomName,
+                        bet: randomBet,
+                        cashout: null,
+                        won: null,
+                        status: 'playing', // All simulated players are 'playing' initially
+                        cashoutTarget: null // Will be set when round starts
+                    });
+                }
+            }
+            updatePlayersTable(); // Update players table immediately
+            updateOnlineAndPlayingCounts(); // Update counts
+        }
+
+        /**
+         * Starts the 10-second pre-round countdown.
+         * During this time, players can place or change their bets.
+         */
+        function startPreRoundCountdown() {
+            initializeUIForPreRound();
+            isGameRunning = false; // Ensure game is not running during pre-round
+
+            preRoundTimer = 10; // 10 seconds countdown
+            countdownTimerOverlay.textContent = preRoundTimer;
+            if (isLoggedIn) {
+                showMessage(`Next round starts in ${preRoundTimer} seconds. Place your bets!`, 'white');
+            } else {
+                showMessage(`Next round starts in ${preRoundTimer} seconds.`, 'white');
+            }
+
+            // Clear any existing countdown interval to prevent duplicates
+            if (roundCountdownInterval) {
+                clearInterval(roundCountdownInterval);
+            }
+
+            roundCountdownInterval = setInterval(() => {
+                preRoundTimer--;
+                countdownTimerOverlay.textContent = preRoundTimer;
+                if (preRoundTimer > 0) {
+                    if (isLoggedIn) {
+                        showMessage(`Next round starts in ${preRoundTimer} seconds. Place your bets!`, 'white');
+                    } else {
+                        showMessage(`Next round starts in ${preRoundTimer} seconds.`, 'white');
+                    }
+                } else {
+                    clearInterval(roundCountdownInterval);
+                    lockBetsAndStartRound();
+                }
+            }, 1000);
+
+            // If auto-bet is enabled AND user is logged in, automatically place a bet after a short delay
+            if (isAutoBetEnabled && isLoggedIn) {
+                // Give a moment for the UI to update and for the user to see the countdown
+                setTimeout(() => {
+                    // Check if a bet has already been placed manually in this pre-round
+                    if (currentBetPlaced === 0) { // Only auto-bet if no manual bet already
+                        // Attempt to place an auto-bet
+                        const autoBet = parseFloat(betAmountInput.value);
+                        if (autoBet > 0 && autoBet <= balance) {
+                            currentBetPlaced = autoBet;
+                            balance -= currentBetPlaced;
+                            topBarBalance.textContent = `${balance.toFixed(2)} KES`; // Update top bar balance
+                            showMessage(`Auto-bet placed: ${autoBet.toFixed(2)}. Waiting for round start...`, 'var(--secondary-color)');
+                            // Generate ticket ID and add to history
+                            currentTicketId = `TKT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 100)}`;
+                            playerBetHistory.unshift({
+                                id: currentTicketId,
+                                bet: currentBetPlaced,
+                                cashout: null,
+                                crash: null,
+                                winAmount: 0,
+                                status: 'Pending'
+                            });
+                            updatePlayerHistoryDisplay();
+                            
+                            // Add user to simulatedPlayers list for the current round
+                            const userPlayerEntry = {
+                                id: currentUserId,
+                                name: currentUserNickname,
+                                bet: currentBetPlaced,
+                                cashout: null,
+                                won: null,
+                                status: 'playing',
+                                cashoutTarget: null // Will be set when round starts
+                            };
+                            simulatedPlayers.push(userPlayerEntry); // Add user to active players
+                            updatePlayersTable(); // Update players table
+                            updateOnlineAndPlayingCounts(); // Update counts
+
+                            saveGameData(); // Save data after auto-bet
+
+                            // Visually disable bet controls after auto-bet
+                            betButton.disabled = true;
+                            betButton.textContent = 'Bet Placed';
+                            betButton.style.backgroundColor = '#555';
+                            betAmountInput.disabled = true;
+                            quickBetButtons.forEach(btn => btn.disabled = true);
+                        } else {
+                            showMessage("Auto-bet: Insufficient balance or invalid bet. Auto-bet paused.", "var(--danger-color)");
+                            isAutoBetEnabled = false; // Pause auto-bet
+                            autoBetToggle.checked = false; // Uncheck auto-bet toggle
+                            initializeUIForPreRound(); // Reset UI for manual interaction
+                            saveGameData(); // Save data after auto-bet change
+                        }
+                    }
+                }, 1000); // Place auto-bet after 1 second of countdown
+            }
+            updateOnlineAndPlayingCounts(); // Update counts after pre-round setup
+        }
+
+        /**
+         * Locks betting controls and starts the game round (jet flying).
+         */
+        function lockBetsAndStartRound() {
+            countdownTimerOverlay.style.display = 'none'; // Hide countdown
+            multiplierDisplayOverlay.style.display = 'block'; // Show multiplier
+            if (isSoundInitialized) gameStartSynth.triggerAttackRelease("C4", "8n"); // Play sound
+
+            // Disable betting controls regardless of whether a bet was placed
+            betButton.disabled = true;
+            betButton.textContent = 'Bets Locked';
+            betButton.style.backgroundColor = '#555';
+            betAmountInput.disabled = true;
+            quickBetButtons.forEach(btn => btn.disabled = true);
+            autoCashoutInput.disabled = true; // Disable auto cashout input
+            autoBetToggle.disabled = true; // Disable auto bet toggle during game
+
+            // Use the provably fair multiplier
+            crashMultiplier = getCrashMultiplier();
+            console.log("Calculated Crash Multiplier:", crashMultiplier); // For debugging
+
+            if (currentBetPlaced > 0 && isLoggedIn) { // Only consider player's bet if logged in
+                betAmount = currentBetPlaced; // Confirm the bet amount for the round
+                isGameRunning = true;
+                hasCashedOut = false; // Player has not cashed out yet
+                cashoutButton.disabled = false; // Enable cashout button
+                
+                showMessage(`Round started! Jet is flying...`, 'var(--secondary-color)');
+                gameLoopInterval = setInterval(gameLoop, 100);
+            } else {
+                showMessage(`Round started! Jet is flying...`, 'var(--secondary-color)');
+                isGameRunning = true; // Still "in game" visually
+                hasCashedOut = true; // Treat as if cashed out for display purposes if no bet
+                cashoutButton.disabled = true; // No cashout if no bet
+                gameLoopInterval = setInterval(gameLoop, 100);
+            }
+
+            // Simulate players cashing out at random multipliers
+            simulatedPlayers.forEach(player => {
+                // Only set cashout target for players who are currently 'playing'
+                if (player.status === 'playing') { 
+                    player.cashoutTarget = 1 + Math.random() * (crashMultiplier - 1.05); 
+                    if (player.cashoutTarget < 1.05) player.cashoutTarget = 1.05;
+                }
+            });
+            updatePlayersTable(); // Update players table
+            updateOnlineAndPlayingCounts(); // Update counts
+        }
+
+        /**
+         * The main game loop, updates multiplier and checks for crash.
+         */
+        function gameLoop() {
+            if (!isGameRunning) return;
+
+            // Increase multiplier
+            multiplier += 0.01 + (multiplier * 0.01); // Exponential growth
+            multiplierDisplayOverlay.textContent = `${multiplier.toFixed(2)}x`;
+
+            // Update potential winnings on cashout button
+            if (currentBetPlaced > 0 && !hasCashedOut && isLoggedIn) { // Only update if logged in
+                potentialWinDisplay.textContent = (currentBetPlaced * multiplier).toFixed(2);
+            }
+
+            // Auto Cashout logic
+            const autoCashoutValue = parseFloat(autoCashoutInput.value);
+            if (isAutoBetEnabled && currentBetPlaced > 0 && multiplier >= autoCashoutValue && !hasCashedOut && isLoggedIn) {
+                cashOut(); // Automatically cash out
+                // Do NOT return here. Let the game loop continue visually until crash.
+            }
+
+            // Simulate other players cashing out
+            simulatedPlayers.forEach(player => {
+                if (player.status === 'playing' && player.cashoutTarget && multiplier >= player.cashoutTarget && player.cashout === null) {
+                    player.cashout = multiplier;
+                    player.won = player.bet * player.cashout;
+                    player.status = 'cashed out';
+                }
+            });
+            updatePlayersTable(); // Update players table frequently
+            updateOnlineAndPlayingCounts(); // Update counts
+
+            // Dynamic Y-axis scaling for the graph
+            if (multiplier > dynamicMaxMultiplierY * 0.8) { 
+                let nextMax = Y_AXIS_BREAKPOINTS.find(bp => bp > dynamicMaxMultiplierY);
+                if (nextMax) {
+                    dynamicMaxMultiplierY = nextMax;
+                } else {
+                    // If we've exceeded the highest breakpoint, just scale up by a factor
+                    dynamicMaxMultiplierY *= 2; 
+                }
+            }
+
+            // Add current point to curve
+            gameTicks++;
+            curvePoints.push({
+                x: ticksToX(gameTicks),
+                y: multToY(multiplier)
+            });
+
+            drawGraph(); // Redraw the graph with the new point
+
+            // Check for crash
+            if (multiplier >= crashMultiplier) {
+                crash();
+            }
+        }
+
+        /**
+         * Handles the "cash out" action from the player.
+         * Only possible if game is running, player hasn't cashed out, and a bet was placed.
+         */
+        function cashOut() {
+            if (!isGameRunning || hasCashedOut || currentBetPlaced === 0 || !isLoggedIn) return; 
+
+            hasCashedOut = true;
+            const winAmount = currentBetPlaced * multiplier; 
+            balance += winAmount;
+            
+            topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
+            cashoutButton.disabled = true; 
+            potentialWinDisplay.textContent = '0.00'; 
+
+            showMessage(`Cashed out at ${multiplier.toFixed(2)}x! You won ${winAmount.toFixed(2)}`, 'var(--success-color)');
+            if (isSoundInitialized) cashoutSynth.triggerAttackRelease("E5", "8n"); // Play sound
+
+            // Update player history entry
+            const historyEntry = playerBetHistory.find(entry => entry.id === currentTicketId);
+            if (historyEntry) {
+                historyEntry.cashout = multiplier;
+                historyEntry.winAmount = winAmount;
+                historyEntry.status = 'Win';
+                updatePlayerHistoryDisplay();
+            }
+            // Update user balance in simulatedUsers array
+            const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
+            if (userIndex !== -1) {
+                simulatedUsers[userIndex].balance = balance;
+            }
+
+            // Update user's entry in simulatedPlayers for the current round
+            const userPlayerEntryIndex = simulatedPlayers.findIndex(p => p.id === currentUserId);
+            if (userPlayerEntryIndex !== -1) {
+                simulatedPlayers[userPlayerEntryIndex].cashout = multiplier;
+                simulatedPlayers[userPlayerEntryIndex].won = winAmount;
+                simulatedPlayers[userPlayerEntryIndex].status = 'cashed out';
+            }
+            updatePlayersTable(); // Update players table after user cashes out
+            updateOnlineAndPlayingCounts(); // Update counts
+
+            // Confetti burst for big wins (e.g., > 10x)
+            if (multiplier >= 10) {
+                startConfetti();
+            }
+
+            saveGameData(); // Save data after cash out
+        }
+
+        /**
+         * Handles the jet crash event and schedules the next round.
+         */
+        function crash() {
+            clearInterval(gameLoopInterval); 
+            isGameRunning = false;
+            
+            // Show "Busted" text on overlay
+            bustedTextOverlay.textContent = `Busted @ ${multiplier.toFixed(2)}x`;
+            bustedTextOverlay.style.display = 'block';
+            multiplierDisplayOverlay.style.display = 'none'; 
+            potentialWinDisplay.textContent = '0.00'; 
+            if (isSoundInitialized) crashSynth.triggerAttackRelease("8n"); // Play sound
+            
+            // Update player history entry
+            const historyEntry = playerBetHistory.find(entry => entry.id === currentTicketId);
+            if (historyEntry) {
+                historyEntry.crash = multiplier; 
+                if (!hasCashedOut) { // If player did not cash out, it's a loss
+                    historyEntry.status = 'Loss';
+                    historyEntry.winAmount = 0; 
+                }
+                updatePlayerHistoryDisplay();
+            }
+
+            if (!hasCashedOut && currentBetPlaced > 0 && isLoggedIn) { // Only show loss message if logged in and actually lost
+                showMessage(`Crashed at ${multiplier.toFixed(2)}x! You lost your bet of ${currentBetPlaced.toFixed(2)}.`, 'var(--danger-color)');
+            } else {
+                showMessage(`The jet flew to ${multiplier.toFixed(2)}x.`, 'var(--secondary-color)');
+            }
+            
+            // Update user balance in simulatedUsers array if a bet was placed and lost
+            if (currentBetPlaced > 0 && !hasCashedOut && isLoggedIn) {
+                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
+                if (userIndex !== -1) {
+                    simulatedUsers[userIndex].balance = balance;
+                }
+            }
+
+            // Update user's entry in simulatedPlayers if they busted
+            const userPlayerEntryIndex = simulatedPlayers.findIndex(p => p.id === currentUserId);
+            if (userPlayerEntryIndex !== -1 && !hasCashedOut) {
+                simulatedPlayers[userPlayerEntryIndex].cashout = multiplier;
+                simulatedPlayers[userPlayerEntryIndex].won = 0;
+                simulatedPlayers[userPlayerEntryIndex].status = 'busted';
+            }
+
+            // Always add to crash history regardless of player's outcome
+            addCrashToHistory(multiplier, hasCashedOut); // Pass hasCashedOut to indicate if player won this round
+
+            saveGameData(); // Save data after crash
+
+            cashoutButton.disabled = true; 
+
+            // Update simulated players who didn't cash out
+            simulatedPlayers.forEach(player => {
+                if (player.status === 'playing') { // Only update if still playing
+                    player.cashout = multiplier; 
+                    player.won = 0; 
+                    player.status = 'busted';
+                }
+            });
+            updatePlayersTable(); // Update players table
+            updateOnlineAndPlayingCounts(); // Update counts after crash
+
+            // Schedule next pre-round countdown after a short delay
+            const delay = 3000 + Math.random() * 2000; 
+            showMessage(`Next round in ${Math.round(delay/1000)} seconds...`, 'white');
+            setTimeout(startPreRoundCountdown, delay);
+        }
+
+        /**
+         * Resets the visual elements of the game (graph, multiplier display, explosion).
+         */
+        function resetAnimation() {
+            multiplier = 1.00;
+            gameTicks = 0;
+            curvePoints = [{ x: ticksToX(0), y: multToY(1.00) }]; 
+            dynamicMaxMultiplierY = 10.0; 
+            drawGraph(); 
+            
+            multiplierDisplayOverlay.textContent = '1.00x';
+            multiplierDisplayOverlay.style.color = 'white';
+            bustedTextOverlay.style.display = 'none'; 
+        }
+
+        /**
+         * Displays a message to the user in the specified target element.
+         * Defaults to the main game message display if no target is provided.
+         * @param {string} text - The message to display.
+         * @param {string} [color='white'] - The color of the message text.
+         * @param {HTMLElement} [targetElement=messageDisplay] - The DOM element to display the message in.
+         */
+        function showMessage(text, color = 'white', targetElement = messageDisplay) {
+            targetElement.innerHTML = text; // Use innerHTML to allow strong tag for password reset
+            targetElement.style.color = color;
+        }
+
+        /**
+         * Adds a crash multiplier to the history and updates the display.
+         * @param {number} crashValue - The multiplier at which the jet crashed.
+         * @param {boolean} didWin - True if the player cashed out before the crash, false otherwise.
+         */
+        function addCrashToHistory(crashValue, didWin) {
+            crashHistory.unshift({ value: crashValue, won: didWin }); 
+            if (crashHistory.length > MAX_HISTORY_ITEMS) {
+                crashHistory.pop(); 
+            }
+            updateCrashHistoryDisplay();
+            saveGameData(); // Save data after crash history update
+        }
+
+        /**
+         * Updates the crash history display element (for the global history tab).
+         */
+        function updateCrashHistoryDisplay() {
+            crashHistoryDisplay.innerHTML = ''; 
+            // Display history from newest to oldest
+            crashHistory.forEach(item => {
+                const span = document.createElement('span');
+                span.textContent = `${item.value.toFixed(2)}x`;
+                
+                // Apply color based on multiplier range
+                if (item.value >= 1.00 && item.value <= 1.99) {
+                    span.classList.add('crash-red');
+                } else if (item.value >= 2.00 && item.value <= 9.00) {
+                    span.classList.add('crash-green');
+                } else if (item.value >= 10.00) { // Multipliers 10x and above are purple
+                    span.classList.add('crash-purple');
+                }
+                
+                crashHistoryDisplay.appendChild(span);
+            });
+        }
+
+        /**
+         * Updates the player's individual bet history display (for the 'My Bets' tab).
+         */
+        function updatePlayerHistoryDisplay() {
+            // Clear all but the header row
+            while (playerHistoryDisplayTab.children.length > 1) {
+                playerHistoryDisplayTab.removeChild(playerHistoryDisplayTab.lastChild);
+            }
+
+            // Add history items in reverse order (newest first)
+            for (let i = 0; i < playerBetHistory.length; i++) {
+                const item = playerBetHistory[i];
+                const div = document.createElement('div');
+                div.classList.add('history-item');
+
+                const ticketIdSpan = document.createElement('span');
+                ticketIdSpan.classList.add('ticket-id');
+                ticketIdSpan.textContent = item.id;
+
+                const betAmountSpan = document.createElement('span');
+                betAmountSpan.classList.add('bet-amount');
+                betAmountSpan.textContent = item.bet.toFixed(2);
+
+                const multiplierInfoSpan = document.createElement('span');
+                multiplierInfoSpan.classList.add('multiplier-info');
+                if (item.status === 'Win') {
+                    multiplierInfoSpan.textContent = `${item.cashout.toFixed(2)}x (Cashed Out)`;
+                    multiplierInfoSpan.style.color = 'var(--success-color)';
+                } else if (item.status === 'Loss') {
+                    multiplierInfoSpan.textContent = `${item.crash.toFixed(2)}x (Busted)`;
+                    multiplierInfoSpan.style.color = 'var(--danger-color)';
+                } else {
+                    multiplierInfoSpan.textContent = 'Pending...';
+                    multiplierInfoSpan.style.color = 'var(--accent-color)';
+                }
+
+                const statusSpan = document.createElement('span');
+                statusSpan.classList.add('status');
+                statusSpan.textContent = item.status;
+                if (item.status === 'Win') {
+                    statusSpan.classList.add('status-win');
+                }
+                if (item.status === 'Loss') {
+                    statusSpan.classList.add('status-loss');
+                }
+
+                div.appendChild(ticketIdSpan);
+                div.appendChild(betAmountSpan);
+                div.appendChild(multiplierInfoSpan);
+                div.appendChild(statusSpan);
+
+                playerHistoryDisplayTab.insertBefore(div, playerHistoryDisplayTab.children[1]);
+            }
+            playerHistoryDisplayTab.scrollTop = 0;
+        }
+
+        /**
+         * Updates the players table in the "Players" tab.
+         */
+        function updatePlayersTable() {
+            playersTableBody.innerHTML = ''; 
+
+            simulatedPlayers.forEach(player => {
+                const row = document.createElement('tr');
+                if (isLoggedIn && player.id === currentUserId) {
+                    row.classList.add('highlighted-player'); // Highlight the current user's row
+                }
+
+                const playerCell = document.createElement('td');
+                const avatarSpan = document.createElement('span');
+                avatarSpan.classList.add('player-avatar');
+                avatarSpan.textContent = player.name.substring(0, 2).toUpperCase(); 
+                playerCell.appendChild(avatarSpan);
+                playerCell.append(player.name);
+
+                const amountCell = document.createElement('td');
+                amountCell.classList.add('amount-cell');
+                amountCell.textContent = player.bet.toFixed(2);
+
+                const cashoutCell = document.createElement('td');
+                cashoutCell.classList.add('cashout-cell');
+                if (player.cashout) {
+                    cashoutCell.textContent = `${player.cashout.toFixed(2)}x`;
+                    if (player.status === 'cashed out') {
+                        cashoutCell.classList.add('cashed-out');
+                    } else if (player.status === 'busted') {
+                        cashoutCell.classList.add('busted');
+                    }
+                } else {
+                    cashoutCell.textContent = '-';
+                }
+
+                const wonCell = document.createElement('td');
+                wonCell.classList.add('won-cell');
+                if (player.won !== null) {
+                    wonCell.textContent = player.won.toFixed(2);
+                } else {
+                    wonCell.textContent = '-';
+                }
+
+                row.appendChild(playerCell);
+                row.appendChild(amountCell);
+                row.appendChild(cashoutCell);
+                row.appendChild(wonCell);
+                playersTableBody.appendChild(row);
+            });
+            updateOnlineAndPlayingCounts(); // Update counts after table update
+        }
+
+        /**
+         * Updates the leaderboard display.
+         */
+        function updateLeaderboardDisplay() {
+            // Clear existing leaderboards
+            leaderboardMultiplierBody.innerHTML = '';
+            leaderboardWinningsBody.innerHTML = '';
+
+            // Combine all users (simulated and current) for leaderboard
+            const allUsersForLeaderboard = [...simulatedUsers];
+            if (isLoggedIn && !allUsersForLeaderboard.some(u => u.mobile === currentUserId)) {
+                // Add current user if not already in simulatedUsers (e.g., newly created)
+                allUsersForLeaderboard.push({
+                    mobile: currentUserId,
+                    nickname: currentUserNickname,
+                    balance: balance,
+                    playerBetHistory: playerBetHistory // Include their history for stats
+                });
+            }
+
+            // Calculate highest multiplier and total winnings for each user
+            const userStats = allUsersForLeaderboard.map(user => {
+                let highestMultiplier = 1.00;
+                let totalWinnings = 0;
+
+                // Use playerBetHistory for the current user, or generate some for simulated users
+                const historyToProcess = user.playerBetHistory || generateSimulatedHistory(user.nickname);
+
+                historyToProcess.forEach(bet => {
+                    if (bet.status === 'Win' && bet.cashout > highestMultiplier) {
+                        highestMultiplier = bet.cashout;
+                    }
+                    if (bet.winAmount) {
+                        totalWinnings += bet.winAmount;
+                    }
+                });
+
+                return {
+                    name: user.nickname,
+                    highestMultiplier: highestMultiplier,
+                    totalWinnings: totalWinnings
+                };
+            });
+
+            // Sort for Top Crashers (Highest Multiplier)
+            const topCrashers = [...userStats].sort((a, b) => b.highestMultiplier - a.highestMultiplier).slice(0, 10);
+            topCrashers.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="rank-cell">${index + 1}</td>
+                    <td>${player.name}</td>
+                    <td class="multiplier-cell">${player.highestMultiplier.toFixed(2)}x</td>
+                `;
+                leaderboardMultiplierBody.appendChild(row);
+            });
+
+            // Sort for Top Earners (Total Winnings)
+            const topEarners = [...userStats].sort((a, b) => b.totalWinnings - a.totalWinnings).slice(0, 10);
+            topEarners.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="rank-cell">${index + 1}</td>
+                    <td>${player.name}</td>
+                    <td class="winnings-cell">${player.totalWinnings.toFixed(2)}</td>
+                `;
+                leaderboardWinningsBody.appendChild(row);
+            });
+        }
+
+        // Helper to generate simulated history for leaderboard if not present
+        function generateSimulatedHistory(nickname) {
+            const history = [];
+            const numEntries = Math.floor(Math.random() * 20) + 5; // 5 to 24 entries
+            for (let i = 0; i < numEntries; i++) {
+                const bet = Math.floor(Math.random() * 100) + 10; // Bet between 10 and 109
+                const outcome = Math.random();
+                let status, cashout, crash, winAmount;
+
+                if (outcome < 0.6) { // 60% chance of loss
+                    status = 'Loss';
+                    crash = 1 + Math.random() * 10; // Crash between 1.00x and 11.00x
+                    cashout = null;
+                    winAmount = 0;
+                } else { // 40% chance of win
+                    status = 'Win';
+                    cashout = 1.5 + Math.random() * 20; // Cashout between 1.5x and 21.5x
+                    crash = null; // No crash for a win
+                    winAmount = bet * cashout;
+                }
+                history.push({
+                    id: `SIM-${nickname.substring(0,3).toUpperCase()}-${i}`,
+                    bet: bet,
+                    cashout: cashout,
+                    crash: crash,
+                    winAmount: winAmount,
+                    status: status
+                });
+            }
+            return history;
+        }
+
+        /**
+         * Updates the online users and playing users counts.
+         */
+        function updateOnlineAndPlayingCounts() {
+            const currentOnline = baseOnlineUsers + (isLoggedIn ? 1 : 0);
+            onlineUsersCount.textContent = currentOnline;
+            const currentPlaying = simulatedPlayers.filter(p => p.status === 'playing').length;
+            playingUsersCount.textContent = currentPlaying;
+        }
+
+        /**
+         * Adds a new message to the chat display.
+         * @param {string} username - The sender's username.
+         * @param {string} message - The message content.
+         */
+        function addChatMessage(username, message) {
+            const now = new Date();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const time = `${now.getHours().toString().padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; 
+
+            const p = document.createElement('p');
+            p.classList.add('chat-message');
+            p.innerHTML = `<span>${time}</span> ${username}: ${message}`;
+            chatMessagesDiv.appendChild(p);
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+        }
+
+        /**
+         * Shows a modal with animation and disables body scrolling.
+         * @param {HTMLElement} modalElement - The modal DOM element.
+         */
+        function showModal(modalElement) {
+            modalElement.style.display = 'flex';
+            // Trigger reflow to ensure transition plays
+            modalElement.offsetWidth; 
+            modalElement.classList.add('show');
+            document.body.classList.add('modal-open');
+        }
+
+        /**
+         * Hides a modal with animation and re-enables body scrolling.
+         * @param {HTMLElement} modalElement - The modal DOM element.
+         */
+        function hideModal(modalElement) {
+            modalElement.classList.remove('show');
+            modalElement.addEventListener('transitionend', function handler() {
+                modalElement.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                modalElement.removeEventListener('transitionend', handler);
+            });
+        }
+
+        /**
+         * Shows the loading spinner.
+         */
+        function showSpinner() {
+            loadingOverlay.style.display = 'flex';
+        }
+
+        /**
+         * Hides the loading spinner.
+         */
+        function hideSpinner() {
+            loadingOverlay.style.display = 'none';
+        }
+
+        // Confetti effect
+        let confetti = [];
+        const NUM_CONFETTI = 50;
+        const COLORS = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'];
+
+        function createConfetti() {
+            confetti = [];
+            for (let i = 0; i < NUM_CONFETTI; i++) {
+                confetti.push({
+                    x: confettiCanvas.width / 2,
+                    y: confettiCanvas.height / 2,
+                    radius: Math.random() * 5 + 2,
+                    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                    velocity: {
+                        x: (Math.random() - 0.5) * 10,
+                        y: (Math.random() - 0.5) * 10 - 5 // Upwards bias
+                    },
+                    alpha: 1
+                });
+            }
+        }
+
+        function drawConfetti() {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confetti.forEach((c, index) => {
+                c.x += c.velocity.x;
+                c.y += c.velocity.y;
+                c.velocity.y += 0.2; // Gravity
+                c.alpha -= 0.01; // Fade out
+
+                if (c.alpha <= 0) {
+                    confetti.splice(index, 1); // Remove faded confetti
+                    return;
+                }
+
+                confettiCtx.save();
+                confettiCtx.globalAlpha = c.alpha;
+                confettiCtx.beginPath();
+                confettiCtx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+                confettiCtx.fillStyle = c.color;
+                confettiCtx.fill();
+                confettiCtx.restore();
+            });
+
+            if (confetti.length > 0) {
+                requestAnimationFrame(drawConfetti);
+            }
+        }
+
+        function startConfetti() {
+            createConfetti();
+            drawConfetti();
+        }
+
+        // --- Event Listeners ---
+        cashoutButton.addEventListener('click', cashOut);
+        
+        // Manual Bet Button Listener
+        betButton.addEventListener('click', () => {
+            if (!isLoggedIn) {
+                showMessage("Please login to place a bet.", "var(--danger-color)");
+                return;
+            }
+            if (isGameRunning) {
+                showMessage("Cannot place bet while round is running.", "var(--danger-color)");
+                return;
+            }
+            if (preRoundTimer === 0) {
+                showMessage("Bets are locked. Waiting for next round.", "var(--danger-color)");
+                return;
+            }
+
+            const potentialBet = parseFloat(betAmountInput.value);
+            if (isNaN(potentialBet) || potentialBet <= 0) {
+                showMessage("Invalid bet amount. Please enter a valid number.", "var(--danger-color)");
+                betAmountInput.classList.add('input-error');
+                return;
+            }
+            betAmountInput.classList.remove('input-error'); // Clear error if valid
+            
+            if (potentialBet > balance) {
+                showMessage("Insufficient balance.", "var(--danger-color)");
+                betAmountInput.classList.add('input-error');
+                return;
+            }
+            betAmountInput.classList.remove('input-error'); // Clear error if valid
+
+            if (currentBetPlaced > 0) {
+                balance += currentBetPlaced; // Refund previous bet
+                topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
+                showMessage(`Bet changed from ${currentBetPlaced.toFixed(2)} to ${potentialBet.toFixed(2)}.`, 'var(--secondary-color)');
+
+                const existingEntry = playerBetHistory.find(entry => entry.id === currentTicketId);
+                if (existingEntry) {
+                    existingEntry.bet = potentialBet;
+                    updatePlayerHistoryDisplay();
+                }
+            } else {
+                showMessage(`Bet placed: ${potentialBet.toFixed(2)}.`, 'var(--success-color)');
+                currentTicketId = `TKT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 100)}`;
+                playerBetHistory.unshift({
+                    id: currentTicketId,
+                    bet: potentialBet,
+                    cashout: null,
+                    crash: null,
+                    winAmount: 0,
+                    status: 'Pending'
+                });
+                updatePlayerHistoryDisplay();
+            }
+
+            currentBetPlaced = potentialBet; 
+            balance -= currentBetPlaced; 
+            topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
+            potentialWinDisplay.textContent = '0.00'; 
+
+            betButton.disabled = true;
+            betButton.textContent = 'Bet Placed';
+            betButton.style.backgroundColor = '#555';
+            betAmountInput.disabled = true;
+            quickBetButtons.forEach(btn => btn.disabled = true);
+            
+            // Add/Update user in simulatedPlayers for the current round
+            const userPlayerEntry = {
+                id: currentUserId, // Use currentUserId for the unique identifier
+                name: currentUserNickname,
+                bet: currentBetPlaced,
+                cashout: null,
+                won: null,
+                status: 'playing' // User is now actively playing for this round
+            };
+            const existingPlayerIndex = simulatedPlayers.findIndex(p => p.id === currentUserId);
+            if (existingPlayerIndex !== -1) {
+                simulatedPlayers[existingPlayerIndex] = userPlayerEntry; // Update existing entry
+            } else {
+                simulatedPlayers.push(userPlayerEntry); // Add new entry
+            }
+            updatePlayersTable(); // Update the table immediately
+            updateOnlineAndPlayingCounts(); // Update counts
+
+            // Update user balance in simulatedUsers array
+            const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
+            if (userIndex !== -1) {
+                simulatedUsers[userIndex].balance = balance;
+            }
+            saveGameData(); // Save data after manual bet
+        });
+
+        // Auto Bet Toggle Listener
+        autoBetToggle.addEventListener('change', () => { 
+            isAutoBetEnabled = autoBetToggle.checked; 
+            if (isAutoBetEnabled && isLoggedIn) { // Check isLoggedIn
+                if (!isGameRunning && preRoundTimer > 0) {
+                    setTimeout(() => { 
+                        if (currentBetPlaced === 0) { 
+                            const autoBet = parseFloat(betAmountInput.value);
+                            if (autoBet > 0 && autoBet <= balance) {
+                                currentBetPlaced = autoBet;
+                                balance -= currentBetPlaced;
+                                topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
+                                showMessage(`Auto-bet placed: ${autoBet.toFixed(2)}. Waiting for round start...`, 'var(--secondary-color)');
+                                currentTicketId = `TKT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 100)}`;
+                                playerBetHistory.unshift({
+                                    id: currentTicketId,
+                                    bet: autoBet, // Use autoBet here
+                                    cashout: null,
+                                    crash: null,
+                                    winAmount: 0,
+                                    status: 'Pending'
+                                });
+                                updatePlayerHistoryDisplay();
+
+                                betButton.disabled = true;
+                                betButton.textContent = 'Bet Placed';
+                                betButton.style.backgroundColor = '#555';
+                                betAmountInput.disabled = true;
+                                quickBetButtons.forEach(btn => btn.disabled = true);
+
+                                // Add user to simulatedPlayers list for the current round
+                                const userPlayerEntry = {
+                                    id: currentUserId, // Use currentUserId for the unique identifier
+                                    name: currentUserNickname,
+                                    bet: currentBetPlaced,
+                                    cashout: null,
+                                    won: null,
+                                    status: 'playing',
+                                    cashoutTarget: null // Will be set when round starts
+                                };
+                                // For auto-bet, we assume it's a new bet for the round, so just push
+                                simulatedPlayers.push(userPlayerEntry); 
+                                updatePlayersTable(); // Update players table
+                                updateOnlineAndPlayingCounts(); // Update counts
+
+                                // Update user balance in simulatedUsers array
+                                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
+                                if (userIndex !== -1) {
+                                    simulatedUsers[userIndex].balance = balance;
+                                }
+                            } else {
+                                showMessage("Auto-bet: Insufficient balance or invalid bet. Auto-bet paused.", "var(--danger-color)");
+                                isAutoBetEnabled = false; 
+                                autoBetToggle.checked = false; 
+                                initializeUIForPreRound(); 
+                            }
+                        }
+                    }, 100);
+                }
+            } else {
+                if (!isGameRunning) {
+                    initializeUIForPreRound(); 
+                    if (isLoggedIn) {
+                        showMessage('Auto-bet disabled. Place your bet to start!', 'var(--secondary-color)');
+                    } else {
+                        showMessage('Login to place your bet!', 'var(--accent-color)');
+                    }
+                }
+                if (roundCountdownInterval) {
+                    clearInterval(roundCountdownInterval);
+                    roundCountdownInterval = null;
+                }
+            }
+            saveGameData(); // Save data after auto-bet toggle change
+        });
+
+        // Quick Bet Buttons Listener
+        quickBetButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (!isGameRunning && !isAutoBetEnabled && preRoundTimer > 0 && isLoggedIn) { // Check isLoggedIn
+                    const value = parseInt(button.dataset.bet);
+                    betAmountInput.value = value;
+                    saveGameData(); // Save data after quick bet button changes input
+                } else if (!isLoggedIn) {
+                    showMessage("Please login to change bet amount.", "var(--danger-color)");
+                }
+            });
+        });
+
+        // Bet Amount Input Listener (for manual changes)
+        betAmountInput.addEventListener('input', () => { // Changed to 'input' for real-time validation
+            const currentVal = parseFloat(betAmountInput.value);
+            if (isNaN(currentVal) || currentVal <= 0) {
+                betAmountInput.classList.add('input-error');
+            } else if (currentVal > balance) {
+                betAmountInput.classList.add('input-error');
+            } else {
+                betAmountInput.classList.remove('input-error');
+            }
+
+            if (isLoggedIn) { // Only save if logged in
+                saveGameData(); // Save data when bet amount input changes
+            }
+        });
+
+        // Auto Cashout Input Listener
+        autoCashoutInput.addEventListener('change', () => {
+            if (isLoggedIn) { // Only save if logged in
+                saveGameData(); // Save data when auto cashout input changes
+            }
+        });
+
+        // Top Bar Button Placeholders
+        promoClickButton.addEventListener('click', () => showMessage('Promo link clicked!', 'var(--accent-color)'));
+
+        // Chat Send Button Listener
+        chatSendButton.addEventListener('click', () => {
+            const message = chatInputField.value.trim();
+            if (message) {
+                addChatMessage(currentUserNickname || "Guest", message); // Use nickname if logged in, else "Guest"
+                chatInputField.value = ''; 
+            }
+        });
+
+        // Allow sending chat message with Enter key
+        chatInputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                chatSendButton.click();
+            }
+        });
+
+        // Tab Switching Logic
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.dataset.tab;
+
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+
+                button.classList.add('active');
+                document.getElementById(`${targetTab}-tab-pane`).classList.add('active');
+
+                if (targetTab === 'my-bets') {
+                    updatePlayerHistoryDisplay(); 
+                } else if (targetTab === 'leaderboard') {
+                    updateLeaderboardDisplay();
+                }
+            });
+        });
+
+        // --- Modal Logic ---
+        // Universal close button listener
+        allCloseModalButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const modalIdToClose = event.target.dataset.modalClose;
+                const modalElement = document.getElementById(modalIdToClose);
+                hideModal(modalElement);
+                // Clear messages and input errors when closing modals
+                if (modalIdToClose === 'loginModal') {
+                    loginMessageDisplay.textContent = '';
+                    loginMobileInput.classList.remove('input-error');
+                    loginPasswordInput.classList.remove('input-error');
+                } else if (modalIdToClose === 'signupModal') {
+                    signupMessageDisplay.textContent = '';
+                    signupMobileInput.classList.remove('input-error');
+                    signupNicknameInput.classList.remove('input-error');
+                    signupPasswordInput.classList.remove('input-error');
+                } else if (modalIdToClose === 'passwordResetModal') { 
+                    passwordResetMessageDisplay.textContent = '';
+                    resetMobileInput.classList.remove('input-error');
+                } else if (modalIdToClose === 'changePasswordModal') {
+                    changePasswordMessageDisplay.textContent = '';
+                    currentPasswordInput.value = '';
+                    newPasswordInput.value = '';
+                    confirmNewPasswordInput.value = '';
+                    currentPasswordInput.classList.remove('input-error');
+                    newPasswordInput.classList.remove('input-error');
+                    confirmNewPasswordInput.classList.remove('input-error');
+                }
+                console.log(`Closing modal: ${modalIdToClose}`);
+            });
+        });
+
+        // Close modal if user clicks outside of it, or close dropdown if clicked outside
+        window.addEventListener('click', (event) => {
+            if (event.target == depositWithdrawModal) {
+                hideModal(depositWithdrawModal);
+                console.log("Closing depositWithdrawModal by outside click.");
+            }
+            if (event.target == loginModal) {
+                hideModal(loginModal);
+                console.log("Closing loginModal by outside click.");
+            }
+            if (event.target == signupModal) {
+                hideModal(signupModal);
+                console.log("Closing signupModal by outside click.");
+            }
+            if (event.target == passwordResetModal) { 
+                hideModal(passwordResetModal);
+                console.log("Closing passwordResetModal by outside click.");
+            }
+            if (event.target == changePasswordModal) {
+                hideModal(changePasswordModal);
+                console.log("Closing changePasswordModal by outside click.");
+            }
+            if (event.target == howToPlayModal) {
+                hideModal(howToPlayModal);
+                console.log("Closing howToPlayModal by outside click.");
+            }
+
+            // Close account dropdown if click is outside of it and the auth button
+            if (!authButton.contains(event.target) && !accountDropdown.contains(event.target)) {
+                accountDropdown.classList.remove('show');
+            }
+        });
+
+        modalTabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.dataset.modalTab;
+                console.log(`Modal tab clicked: ${targetTab}`);
+
+                modalTabButtons.forEach(btn => btn.classList.remove('active'));
+                modalTabPanes.forEach(pane => pane.classList.remove('active'));
+
+                button.classList.add('active');
+                document.getElementById(`${targetTab}-tab-pane`).classList.add('active');
+
+                // Special logic for withdraw tab to update "To Disburse"
+                if (targetTab === 'withdraw') {
+                    updateToDisburse();
+                }
+            });
+        });
+
+        depositAmountInput.addEventListener('input', () => {
+            const amount = parseFloat(depositAmountInput.value);
+            if (isNaN(amount) || amount < 10) {
+                depositAmountInput.classList.add('input-error');
+            } else {
+                depositAmountInput.classList.remove('input-error');
+            }
+        });
+
+        withdrawAmountInput.addEventListener('input', () => {
+            updateToDisburse();
+            const amount = parseFloat(withdrawAmountInput.value);
+            if (isNaN(amount) || amount < 100 || amount > balance) {
+                withdrawAmountInput.classList.add('input-error');
+            } else {
+                withdrawAmountInput.classList.remove('input-error');
+            }
+        });
+
+        function updateToDisburse() {
+            const withdrawAmount = parseFloat(withdrawAmountInput.value);
+            const transferFee = 5; // Fixed fee
+            let toDisburse = withdrawAmount - transferFee;
+            if (toDisburse < 0) toDisburse = 0; // Prevent negative display
+            toDisburseSpan.textContent = toDisburse.toFixed(2);
+        }
+
+        topUpNowButton.addEventListener('click', () => {
+            const amount = parseFloat(depositAmountInput.value);
+            if (isNaN(amount) || amount <= 0) {
+                showMessage("Please enter a valid deposit amount.", "var(--danger-color)");
+                depositAmountInput.classList.add('input-error');
+                return;
+            }
+            if (amount < 10) {
+                showMessage("Minimum deposit amount is 10/-", "var(--danger-color)");
+                depositAmountInput.classList.add('input-error');
+                return;
+            }
+            depositAmountInput.classList.remove('input-error');
+            showSpinner();
+            setTimeout(() => { // Simulate network delay
+                balance += amount;
+                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
+                if (userIndex !== -1) {
+                    simulatedUsers[userIndex].balance = balance;
+                }
+                saveGameData();
+                updateModalBalance();
+                topBarBalance.textContent = `${balance.toFixed(2)} KES`;
+                showMessage(`Successfully deposited ${amount.toFixed(2)} KES!`, "var(--success-color)");
+                hideSpinner();
+            }, 1000);
+        });
+
+        withdrawNowButton.addEventListener('click', () => {
+            const amount = parseFloat(withdrawAmountInput.value);
+            if (isNaN(amount) || amount <= 0) {
+                showMessage("Please enter a valid withdrawal amount.", "var(--danger-color)");
+                withdrawAmountInput.classList.add('input-error');
+                return;
+            }
+            if (amount < 100) {
+                showMessage("Minimum withdrawal amount is 100/-", "var(--danger-color)");
+                withdrawAmountInput.classList.add('input-error');
+                return;
+            }
+            if (amount > balance) {
+                showMessage("Insufficient withdrawable balance.", "var(--danger-color)");
+                withdrawAmountInput.classList.add('input-error');
+                return;
+            }
+            withdrawAmountInput.classList.remove('input-error');
+            showSpinner();
+            setTimeout(() => { // Simulate network delay
+                // Simulate 20% WHT
+                const taxRate = 0.20;
+                const taxableAmount = amount;
+                const taxDeduction = taxableAmount * taxRate;
+                const finalWithdrawal = amount - taxDeduction;
+
+                balance -= amount;
+                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
+                if (userIndex !== -1) {
+                    simulatedUsers[userIndex].balance = balance;
+                }
+                saveGameData();
+                updateModalBalance();
+                topBarBalance.textContent = `${balance.toFixed(2)} KES`;
+                showMessage(`Successfully withdrew ${finalWithdrawal.toFixed(2)} KES (Tax: ${taxDeduction.toFixed(2)} KES).`, "var(--success-color)");
+                hideSpinner();
+            }, 1000);
+        });
+
+        verifyMpesaButton.addEventListener('click', () => {
+            const mpesaCode = mpesaCodeInput.value.trim();
+            if (mpesaCode.length === 0) {
+                showMessage("Please enter an M-PESA code.", "var(--danger-color)");
+                mpesaCodeInput.classList.add('input-error');
+                return;
+            }
+            mpesaCodeInput.classList.remove('input-error');
+            showSpinner();
+            setTimeout(() => { // Simulate verification
+                showMessage(`Verifying M-PESA code: ${mpesaCode}... (This is a simulation)`, "var(--secondary-color)");
+                mpesaCodeInput.value = ''; // Clear input
+                hideSpinner();
+            }, 1000);
+        });
+
+        function updateModalBalance() {
+            modalBalance.textContent = balance.toFixed(2);
+            modalWithdrawable.textContent = balance.toFixed(2); 
+            modalBonus.textContent = (balance * 0.1).toFixed(2); // Example: 10% of balance as bonus
+        }
+
+        // --- Login/Signup Modals Logic ---
+        function isValidMobile(mobile) {
+            return /^07\d{8}$/.test(mobile);
+        }
+
+        function isValidPassword(password) {
+            return password.length >= 6 && password.length <= 8; // Min 6, Max 8 characters
+        }
+
+        showSignupLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideModal(loginModal);
+            showModal(signupModal);
+            signupMobileInput.value = '';
+            signupNicknameInput.value = '';
+            signupPasswordInput.value = '';
+            signupMessageDisplay.textContent = '';
+            signupMobileInput.classList.remove('input-error');
+            signupNicknameInput.classList.remove('input-error');
+            signupPasswordInput.classList.remove('input-error');
+        });
+
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideModal(signupModal);
+            showModal(loginModal);
+            loginMobileInput.value = '';
+            loginPasswordInput.value = '';
+            loginMessageDisplay.textContent = '';
+            loginMobileInput.classList.remove('input-error');
+            loginPasswordInput.classList.remove('input-error');
+        });
+
+        createAccountButton.addEventListener('click', () => {
+            const mobile = signupMobileInput.value.trim();
+            const nickname = signupNicknameInput.value.trim();
+            const password = signupPasswordInput.value.trim();
+
+            let hasError = false;
+            if (!mobile || !isValidMobile(mobile)) {
+                showMessage("Invalid mobile format (e.g., 07XXXXXXXX).", "var(--danger-color)", signupMessageDisplay);
+                signupMobileInput.classList.add('input-error');
+                hasError = true;
+            } else {
+                signupMobileInput.classList.remove('input-error');
+            }
+            if (!nickname) {
+                showMessage("Nickname is required.", "var(--danger-color)", signupMessageDisplay);
+                signupNicknameInput.classList.add('input-error');
+                hasError = true;
+            } else {
+                signupNicknameInput.classList.remove('input-error');
+            }
+            if (!password || !isValidPassword(password)) {
+                showMessage("Password must be 6-8 characters long.", "var(--danger-color)", signupMessageDisplay);
+                signupPasswordInput.classList.add('input-error');
+                hasError = true;
+            } else {
+                signupPasswordInput.classList.remove('input-error');
+            }
+            if (hasError) return;
+
+            if (simulatedUsers.some(user => user.mobile === mobile)) {
+                showMessage("Account with this mobile number already exists.", "var(--danger-color)", signupMessageDisplay);
+                signupMobileInput.classList.add('input-error');
+                return;
+            }
+
+            showSpinner();
+            setTimeout(() => { // Simulate network delay
+                simulatedUsers.push({ mobile, nickname, password, balance: 1000, playerBetHistory: [] }); // Initial balance and empty history for new users
+                saveGameData();
+                showMessage("Account successfully created! Please login.", "var(--success-color)", signupMessageDisplay);
+                hideSpinner();
+                setTimeout(() => {
+                    hideModal(signupModal);
+                    showModal(loginModal);
+                    loginMobileInput.value = mobile;
+                    loginPasswordInput.value = '';
+                    loginMessageDisplay.textContent = '';
+                }, 1500);
+            }, 1000);
+        });
+
+        loginButton.addEventListener('click', () => {
+            const mobile = loginMobileInput.value.trim();
+            const password = loginPasswordInput.value.trim();
+
+            let hasError = false;
+            if (!mobile || !isValidMobile(mobile)) {
+                showMessage("Invalid mobile format (e.g., 07XXXXXXXX).", "var(--danger-color)", loginMessageDisplay);
+                loginMobileInput.classList.add('input-error');
+                hasError = true;
+            } else {
+                loginMobileInput.classList.remove('input-error');
+            }
+            if (!password) {
+                showMessage("Password is required.", "var(--danger-color)", loginMessageDisplay);
+                loginPasswordInput.classList.add('input-error');
+                hasError = true;
+            } else {
+                loginPasswordInput.classList.remove('input-error');
+            }
+            if (hasError) return;
+
+            const user = simulatedUsers.find(u => u.mobile === mobile && u.password === password);
+
+            if (user) {
+                showSpinner();
+                setTimeout(() => { // Simulate network delay
+                    isLoggedIn = true;
+                    currentUserId = user.mobile;
+                    currentUserNickname = user.nickname;
+                    balance = user.balance;
+                    playerBetHistory.length = 0;
+                    if (user.playerBetHistory) {
+                        user.playerBetHistory.forEach(item => playerBetHistory.push(item));
+                    }
+                    saveGameData();
+                    showMessage(`Welcome, ${currentUserNickname}!`, "var(--success-color)", loginMessageDisplay);
+                    hideSpinner();
+                    setTimeout(() => {
+                        hideModal(loginModal);
+                        updateAuthUI();
+                        startPreRoundCountdown();
+                    }, 1500);
+                }, 1000);
+            } else {
+                showMessage("Invalid mobile number or password.", "var(--danger-color)", loginMessageDisplay);
+                loginMobileInput.classList.add('input-error');
+                loginPasswordInput.classList.add('input-error');
+            }
+        });
+
+        // Forgot Password Link Listener
+        showPasswordResetLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideModal(loginModal);
+            showModal(passwordResetModal);
+            resetMobileInput.value = '';
+            passwordResetMessageDisplay.textContent = '';
+            resetMobileInput.classList.remove('input-error');
+        });
+
+        // Back to Login Link Listener
+        backToLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideModal(passwordResetModal);
+            showModal(loginModal);
+            loginMobileInput.value = '';
+            loginPasswordInput.value = '';
+            loginMessageDisplay.textContent = '';
+        });
+
+        // Reset Password Button Listener
+        resetPasswordButton.addEventListener('click', () => {
+            const mobile = resetMobileInput.value.trim();
+
+            if (!mobile || !isValidMobile(mobile)) {
+                showMessage("Invalid mobile format (e.g., 07XXXXXXXX).", "var(--danger-color)", passwordResetMessageDisplay);
+                resetMobileInput.classList.add('input-error');
+                return;
+            }
+            resetMobileInput.classList.remove('input-error');
+
+            const userIndex = simulatedUsers.findIndex(u => u.mobile === mobile);
+
+            if (userIndex !== -1) {
+                showSpinner();
+                setTimeout(() => { // Simulate network delay
+                    const newPassword = Math.random().toString(36).slice(-8);
+                    simulatedUsers[userIndex].password = newPassword;
+                    saveGameData();
+
+                    showMessage(`Your new password is: <strong>${newPassword}</strong>. Please use this to login.`, "var(--success-color)", passwordResetMessageDisplay);
+                    hideSpinner();
+                    setTimeout(() => {
+                        hideModal(passwordResetModal);
+                        showModal(loginModal);
+                        loginMobileInput.value = mobile;
+                        loginPasswordInput.value = newPassword;
+                        loginMessageDisplay.textContent = 'Please login with your new password.';
+                        loginMessageDisplay.style.color = 'var(--secondary-color)';
+                    }, 3000);
+                }, 1000);
+            } else {
+                showMessage("No account found with this mobile number.", "var(--danger-color)", passwordResetMessageDisplay);
+                resetMobileInput.classList.add('input-error');
+            }
+        });
+
+        // --- New Account Dropdown Functionality ---
+        dropdownDepositWithdraw.addEventListener('click', (e) => {
+            e.preventDefault();
+            accountDropdown.classList.remove('show');
+            showModal(depositWithdrawModal);
+            updateModalBalance();
+            document.querySelector('.modal-tab-button[data-modal-tab="deposit"]').click();
+        });
+
+        dropdownChangePassword.addEventListener('click', (e) => {
+            e.preventDefault();
+            accountDropdown.classList.remove('show');
+            showModal(changePasswordModal);
+            changePasswordMessageDisplay.textContent = '';
+            currentPasswordInput.value = '';
+            newPasswordInput.value = '';
+            confirmNewPasswordInput.value = '';
+            currentPasswordInput.classList.remove('input-error');
+            newPasswordInput.classList.remove('input-error');
+            confirmNewPasswordInput.classList.remove('input-error');
+        });
+
+        dropdownHowToPlay.addEventListener('click', (e) => {
+            e.preventDefault();
+            accountDropdown.classList.remove('show');
+            showModal(howToPlayModal);
+        });
+
+        dropdownLogout.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSpinner();
+            setTimeout(() => { // Simulate network delay
+                isLoggedIn = false;
+                currentUserId = null;
+                currentUserNickname = null;
+                balance = 1000;
+                playerBetHistory.length = 0;
+                
+                saveGameData();
+                updateAuthUI();
+                accountDropdown.classList.remove('show');
+                showMessage("You have been successfully logged out.", "var(--success-color)");
+                startPreRoundCountdown();
+                hideSpinner();
+            }, 500);
+        });
+
+        // --- Change Password Modal Logic ---
+        updatePasswordButton.addEventListener('click', () => {
+            const currentPass = currentPasswordInput.value.trim();
+            const newPass = newPasswordInput.value.trim();
+            const confirmNewPass = confirmNewPasswordInput.value.trim();
+
+            let hasError = false;
+            if (!currentPass) {
+                showMessage("Current password is required.", "var(--danger-color)", changePasswordMessageDisplay);
+                currentPasswordInput.classList.add('input-error');
+                hasError = true;
+            } else {
+                currentPasswordInput.classList.remove('input-error');
+            }
+            if (!newPass || !isValidPassword(newPass)) {
+                showMessage("New password must be 6-8 characters long.", "var(--danger-color)", changePasswordMessageDisplay);
+                newPasswordInput.classList.add('input-error');
+                hasError = true;
+            } else {
+                newPasswordInput.classList.remove('input-error');
+            }
+            if (newPass !== confirmNewPass) {
+                showMessage("New password and confirm password do not match.", "var(--danger-color)", changePasswordMessageDisplay);
+                confirmNewPasswordInput.classList.add('input-error');
+                hasError = true;
+            } else {
+                confirmNewPasswordInput.classList.remove('input-error');
+            }
+            if (hasError) return;
+
+            const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
+            if (userIndex === -1) {
+                showMessage("Error: User not found. Please re-login.", "var(--danger-color)", changePasswordMessageDisplay);
+                return;
+            }
+
+            if (simulatedUsers[userIndex].password !== currentPass) {
+                showMessage("Current password is incorrect.", "var(--danger-color)", changePasswordMessageDisplay);
+                currentPasswordInput.classList.add('input-error');
+                return;
+            }
+
+            showSpinner();
+            setTimeout(() => { // Simulate network delay
+                simulatedUsers[userIndex].password = newPass;
+                saveGameData();
+                showMessage("Password successfully updated!", "var(--success-color)", changePasswordMessageDisplay);
+                hideSpinner();
+                currentPasswordInput.value = '';
+                newPasswordInput.value = '';
+                confirmNewPasswordInput.value = '';
+                setTimeout(() => {
+                    hideModal(changePasswordModal);
+                }, 1500);
+            }, 1000);
+        });
+
+        // Theme Toggle Listener
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            if (document.body.classList.contains('light-theme')) {
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            } else {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            saveGameData(); // Save theme preference
+            drawGraph(); // Redraw graph to apply new colors
+        });
+
+
+        // Override saveGameData to also save playerBetHistory to the specific user
+        const originalSaveGameData = saveGameData;
+        saveGameData = function() {
+            if (isLoggedIn && currentUserId) {
+                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
+                if (userIndex !== -1) {
+                    simulatedUsers[userIndex].balance = balance;
+                    simulatedUsers[userIndex].playerBetHistory = playerBetHistory; // Save current player's history
+                }
+            }
+            originalSaveGameData(); // Call the original function to save other global states
+        };
+
+        // Fluctuate baseOnlineUsers every 5-10 seconds
+        function startOnlineUsersFluctuation() {
+            if (onlineUsersFluctuationInterval) clearInterval(onlineUsersFluctuationInterval);
+            onlineUsersFluctuationInterval = setInterval(() => {
+                // Fluctuate baseOnlineUsers between 80 and 120
+                baseOnlineUsers = Math.floor(Math.random() * (120 - 80 + 1)) + 80;
+                updateOnlineAndPlayingCounts();
+            }, 5000 + Math.random() * 5000); // Between 5 and 10 seconds
+        }
+
+        // --- Initial Load ---
+        window.onload = () => {
+            loadGameData(); // Load data first
+            gameCanvas.width = gameCanvas.clientWidth;
+            gameCanvas.height = gameCanvas.clientHeight;
+            confettiCanvas.width = confettiCanvas.clientWidth; // Set confetti canvas size
+            confettiCanvas.height = confettiCanvas.clientHeight; // Set confetti canvas size
+            
+            initStars(); 
+
+            updateCrashHistoryDisplay(); 
+            updatePlayerHistoryDisplay(); 
+            updateModalBalance(); // Initial update for modal balances
+            updateAuthUI(); // Set initial UI based on login state
+            updateLeaderboardDisplay(); // Initial leaderboard display
+            startOnlineUsersFluctuation(); // Start fluctuating online users
+
+            // Clear existing chat messages and add the two new ones
+            chatMessagesDiv.innerHTML = '';
+            addChatMessage("Senko Mtato", "Welcome to Prince Alex Jet!");
+            addChatMessage("Nyalez", "Good luck everyone!");
+
+            startPreRoundCountdown(); // Always start the countdown, but betting is restricted if not logged in
+
+            // Initialize audio context on first user interaction for browser policy compliance
+            document.body.addEventListener('click', initializeAudio, { once: true });
+        };
+
+        // Handle window resize to adjust canvas
+        window.addEventListener('resize', () => {
+            gameCanvas.width = gameCanvas.clientWidth;
+            gameCanvas.height = gameCanvas.clientHeight;
+            confettiCanvas.width = confettiCanvas.clientWidth; // Resize confetti canvas
+            confettiCanvas.height = confettiCanvas.clientHeight; // Resize confetti canvas
+            initStars(); 
+            if (isGameRunning) {
+                drawGraph();
+            } else {
+                resetAnimation(); 
+            }
+        });
+
+    </script>
+</body>
+</html>
