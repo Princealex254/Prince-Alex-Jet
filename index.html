@@ -1746,7 +1746,7 @@
         const { createClient } = supabase
         const supabaseClient = createClient(
           'https://yigtwtapnqbpmnoeitpa.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpZ3R3dGFwbnFicG1ub2VpdHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDA4MTEsImV4cCI6MjA2ODY3NjgxMX0.rKF2MwO94wPeT2V0rDsypNcwjOk2wN9rMwmiYo79T2g'
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpZ3R3dGFwbnFicG1ub2VpdHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDA4MTEsImexciI6MjA2ODY3NjgxMX0.rKF2MwO94wPeT2V0rDsypNcwjOk2wN9rMwmiYo79T2g'
         );
     </script>
     <script defer>
@@ -1877,8 +1877,7 @@
         let currentBetId = null;
         let roundCountdownInterval = null; 
         let preRoundTimer = 0; 
-        const crashHistory = []; 
-        const MAX_HISTORY_ITEMS = 10; 
+        const MAX_HISTORY_ITEMS = 10; // Max items to display in crash history
 
         let curvePoints = [{ x: 0, y: 0 }]; 
         let gameTicks = 0; 
@@ -2227,30 +2226,30 @@
                 ctx.fill();
             }
 
-            // Draw graph line
+            // Draw graph line (re-added)
             if (curvePoints.length > 1) {
                 ctx.beginPath();
-                ctx.strokeStyle = varToRgba('--graph-line-color');
+                ctx.strokeStyle = varToRgba('--graph-line-color'); // Use the red color for the line
                 ctx.lineWidth = 3;
                 ctx.moveTo(curvePoints[0].x, curvePoints[0].y);
                 for (let i = 1; i < curvePoints.length; i++) {
                     ctx.lineTo(curvePoints[i].x, curvePoints[i].y);
                 }
                 ctx.stroke();
+            }
 
-                // Draw airplane at the end of the line
-                if (isGameRunning) {
-                    const lastPoint = curvePoints[curvePoints.length - 1];
-                    const prevPoint = curvePoints[curvePoints.length - 2] || curvePoints[0];
-                    const angle = Math.atan2(lastPoint.y - prevPoint.y, lastPoint.x - prevPoint.x);
-                    ctx.save();
-                    ctx.translate(lastPoint.x, lastPoint.y);
-                    ctx.rotate(angle);
-                    ctx.fillStyle = 'white';
-                    ctx.scale(0.8, 0.8);
-                    ctx.fill(airplanePath);
-                    ctx.restore();
-                }
+            // Draw airplane at the end of the line
+            if (isGameRunning && curvePoints.length > 1) {
+                const lastPoint = curvePoints[curvePoints.length - 1];
+                const prevPoint = curvePoints[curvePoints.length - 2] || curvePoints[0];
+                const angle = Math.atan2(lastPoint.y - prevPoint.y, lastPoint.x - prevPoint.x);
+                ctx.save();
+                ctx.translate(lastPoint.x, lastPoint.y);
+                ctx.rotate(angle);
+                ctx.fillStyle = 'white';
+                ctx.scale(0.8, 0.8);
+                ctx.fill(airplanePath);
+                ctx.restore();
             }
             ctx.font = '12px var(--font-family-body)';
             ctx.fillStyle = 'white';
@@ -2409,10 +2408,13 @@
             }
 
             simulatedPlayers.forEach(player => {
-                if (player.status === 'playing' && player.cashoutTarget && multiplier >= player.cashoutTarget && player.cashout === null) {
-                    player.cashout = multiplier;
-                    player.won = player.bet * player.cashout;
-                    player.status = 'cashed out';
+                if (player.status === 'playing') {
+                    player.status = 'busted'; // Default to busted if not cashed out
+                    if (player.cashoutTarget && multiplier >= player.cashoutTarget && player.cashout === null) {
+                        player.cashout = multiplier;
+                        player.won = player.bet * player.cashout;
+                        player.status = 'cashed out';
+                    }
                 }
             });
             updatePlayersTable();
@@ -2483,7 +2485,14 @@
                  showMessage(`The jet flew to ${multiplier.toFixed(2)}x.`, 'var(--secondary-color)');
             }
 
-            addCrashToHistory(multiplier);
+            // Save crash multiplier to Supabase
+            const { error: insertError } = await supabaseClient.from('game_rounds').insert({ crash_multiplier: multiplier });
+            if (insertError) {
+                console.error("Error saving crash multiplier to Supabase:", insertError.message);
+            }
+            
+            await updateCrashHistoryDisplay(); // Fetch and display from Supabase
+
             cashoutButton.disabled = true; 
 
             simulatedPlayers.forEach(player => {
@@ -2513,21 +2522,25 @@
             targetElement.style.color = color;
         }
 
-        function addCrashToHistory(crashValue) {
-            crashHistory.unshift({ value: crashValue }); 
-            if (crashHistory.length > MAX_HISTORY_ITEMS) {
-                crashHistory.pop(); 
-            }
-            updateCrashHistoryDisplay();
-        }
+        // Modified to fetch from Supabase
+        async function updateCrashHistoryDisplay() {
+            const { data, error } = await supabaseClient
+                .from('game_rounds')
+                .select('crash_multiplier')
+                .order('created_at', { ascending: false })
+                .limit(MAX_HISTORY_ITEMS);
 
-        function updateCrashHistoryDisplay() {
+            if (error) {
+                console.error("Error fetching crash history from Supabase:", error.message);
+                return;
+            }
+
             crashHistoryDisplay.innerHTML = ''; 
-            crashHistory.forEach(item => {
+            data.forEach(item => {
                 const span = document.createElement('span');
-                span.textContent = `${item.value.toFixed(2)}x`;
-                if (item.value < 2) span.className = 'crash-red';
-                else if (item.value < 10) span.className = 'crash-green';
+                span.textContent = `${item.crash_multiplier.toFixed(2)}x`;
+                if (item.crash_multiplier < 2) span.className = 'crash-red';
+                else if (item.crash_multiplier < 10) span.className = 'crash-green';
                 else span.className = 'crash-purple';
                 crashHistoryDisplay.appendChild(span);
             });
