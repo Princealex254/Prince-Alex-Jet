@@ -868,7 +868,7 @@
         .tab-button.active {
             background-color: var(--tab-bg-active);
             color: var(--accent-color);
-            border-bottom: 2px solid var(--tab-border-active);
+            border-bottom: 22px solid var(--tab-border-active);
             z-index: 2;
         }
 
@@ -1871,7 +1871,7 @@
         let crashMultiplier = 1.00;
         let isGameRunning = false; 
         let hasCashedOut = false; 
-        let gameLoopInterval = null; 
+        let gameLogicInterval = null; // Renamed to avoid confusion with animation loop
         let isAutoBetEnabled = false;
         let currentBetPlaced = 0; 
         let currentBetId = null;
@@ -2022,7 +2022,10 @@
 
         async function placeBet(betAmount, autoCashoutAt) {
             const { data: { user } } = await supabaseClient.auth.getUser();
-            if (!user) return;
+            if (!user) {
+                showMessage("Please log in to place a bet.", "var(--danger-color)");
+                return;
+            }
 
             const { data, error } = await supabaseClient.from('bets').insert({
                 user_id: user.id,
@@ -2038,6 +2041,7 @@
                 await loadUserData();
             } else {
                 console.error(error?.message || "Error placing bet");
+                showMessage(error?.message || "Error placing bet. Please try again.", "var(--danger-color)");
             }
         }
         
@@ -2080,7 +2084,7 @@
                 row.innerHTML = `
                 <span class="ticket-id">${bet.id.slice(0, 6)}</span>
                 <span class="bet-amount">${bet.bet_amount.toFixed(2)}</span>
-                <span class="multiplier-info">${bet.multiplier || '-'}x</span>
+                <span class="multiplier-info">${bet.multiplier ? bet.multiplier.toFixed(2) + 'x' : '-'}</span>
                 <span class="status ${bet.result_status === 'won' ? 'status-win' : 'status-loss'}">${bet.result_status}</span>
                 `;
                 playerHistoryContainer.appendChild(row);
@@ -2095,6 +2099,7 @@
                 topBarBalance.textContent = `${balance.toFixed(2)} KES`;
                 betButton.disabled = false;
                 betButton.textContent = 'Bet [Next Game]';
+                betButton.style.backgroundColor = 'var(--success-color)';
                 betAmountInput.disabled = false;
                 quickBetButtons.forEach(btn => btn.disabled = false);
                 autoCashoutInput.disabled = false;
@@ -2125,7 +2130,9 @@
         function multToY(mult) {
             const graphHeight = gameCanvas.height - 2 * PADDING_Y;
             const scaledMult = Math.max(1, mult);
-            return gameCanvas.height - PADDING_Y - ((scaledMult - 1) / (dynamicMaxMultiplierY - 1)) * graphHeight;
+            // Ensure the denominator is not zero or negative for multipliers less than 1
+            const effectiveMaxMultiplierY = dynamicMaxMultiplierY > 1 ? dynamicMaxMultiplierY : 1.01;
+            return gameCanvas.height - PADDING_Y - ((scaledMult - 1) / (effectiveMaxMultiplierY - 1)) * graphHeight;
         }
 
         function ticksToX(ticks) {
@@ -2161,19 +2168,22 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
+            // Draw X-axis (time)
             ctx.beginPath();
             ctx.moveTo(PADDING_X, gameCanvas.height - PADDING_Y);
             ctx.lineTo(gameCanvas.width - PADDING_X, gameCanvas.height - PADDING_Y);
             ctx.stroke();
 
+            // Draw Y-axis (multiplier)
             ctx.beginPath();
             ctx.moveTo(PADDING_X, PADDING_Y);
             ctx.lineTo(PADDING_X, gameCanvas.height - PADDING_Y);
             ctx.stroke();
 
+            // Draw X-axis labels and grid lines
             for (let i = 0; i <= 8; i += 2) {
                 const x = ticksToX(i * (MAX_GAME_TICKS_X_SCALE / 8));
-                ctx.fillText(i, x, gameCanvas.height - PADDING_Y / 2);
+                ctx.fillText(i + 's', x, gameCanvas.height - PADDING_Y / 2); // Label in seconds
                 ctx.beginPath();
                 ctx.moveTo(x, gameCanvas.height - PADDING_Y);
                 ctx.lineTo(x, PADDING_Y);
@@ -2181,6 +2191,7 @@
                 ctx.stroke();
             }
 
+            // Draw Y-axis labels and grid lines
             let labelStep = 1;
             if (dynamicMaxMultiplierY >= 100) labelStep = 100;
             else if (dynamicMaxMultiplierY >= 50) labelStep = 10;
@@ -2201,12 +2212,13 @@
                 }
             }
 
+            // Draw graph fill (area under the curve)
             if (curvePoints.length > 1) {
                 ctx.beginPath();
-                ctx.moveTo(PADDING_X, gameCanvas.height - PADDING_Y);
+                ctx.moveTo(PADDING_X, gameCanvas.height - PADDING_Y); // Start at bottom-left of graph area
                 curvePoints.forEach(point => ctx.lineTo(point.x, point.y));
                 const lastPoint = curvePoints[curvePoints.length - 1];
-                ctx.lineTo(lastPoint.x, gameCanvas.height - PADDING_Y);
+                ctx.lineTo(lastPoint.x, gameCanvas.height - PADDING_Y); // Go down to X-axis
                 ctx.closePath();
                 const gradient = ctx.createLinearGradient(0, PADDING_Y, 0, gameCanvas.height - PADDING_Y);
                 gradient.addColorStop(0, varToRgba('--graph-fill-color-top'));
@@ -2215,6 +2227,7 @@
                 ctx.fill();
             }
 
+            // Draw graph line
             if (curvePoints.length > 1) {
                 ctx.beginPath();
                 ctx.strokeStyle = varToRgba('--graph-line-color');
@@ -2225,6 +2238,7 @@
                 }
                 ctx.stroke();
 
+                // Draw airplane at the end of the line
                 if (isGameRunning) {
                     const lastPoint = curvePoints[curvePoints.length - 1];
                     const prevPoint = curvePoints[curvePoints.length - 2] || curvePoints[0];
@@ -2270,7 +2284,7 @@
                     betAmountInput.disabled = true;
                     quickBetButtons.forEach(btn => btn.disabled = true);
                 }
-                messageDisplay.textContent = `Next round starts in ${preRoundTimer} seconds. Place your bets!`;
+                messageDisplay.textContent = 'Place your bet to start the round!';
             } else {
                 betButton.disabled = true;
                 betButton.textContent = 'Login to Bet';
@@ -2376,15 +2390,7 @@
             }
             
             showMessage(`Round started! Jet is flying...`, 'var(--secondary-color)');
-            gameLoopInterval = setInterval(gameLoop, 100);
-
-            simulatedPlayers.forEach(player => {
-                if (player.status === 'playing') { 
-                    player.cashoutTarget = 1 + Math.random() * (crashMultiplier - 1.05); 
-                    if (player.cashoutTarget < 1.05) player.cashoutTarget = 1.05;
-                }
-            });
-            updatePlayersTable();
+            gameLogicInterval = setInterval(gameLoop, 100); // Changed to gameLogicInterval
         }
 
         function gameLoop() {
@@ -2417,12 +2423,27 @@
             }
 
             gameTicks++;
-            curvePoints.push({ x: ticksToX(gameTicks), y: multToY(multiplier) });
-            drawGraph();
+            // Only add point if it's within the visible X range
+            const currentX = ticksToX(gameTicks);
+            if (currentX <= gameCanvas.width - PADDING_X) {
+                curvePoints.push({ x: currentX, y: multToY(multiplier) });
+            } else {
+                // If we go beyond the X-axis, shift the graph
+                const shiftAmount = currentX - (gameCanvas.width - PADDING_X);
+                curvePoints = curvePoints.map(p => ({ x: p.x - shiftAmount, y: p.y }));
+                // Also update the starting point to maintain relative position
+                curvePoints[0].x = PADDING_X; // Reset the origin if it shifts too far
+            }
 
             if (multiplier >= crashMultiplier) {
                 crash();
             }
+        }
+
+        // Main animation loop for drawing
+        function animate() {
+            drawGraph();
+            requestAnimationFrame(animate);
         }
 
         async function cashOut() {
@@ -2444,7 +2465,7 @@
         }
 
         async function crash() {
-            clearInterval(gameLoopInterval); 
+            clearInterval(gameLogicInterval); // Clear game logic interval
             isGameRunning = false;
             
             bustedTextOverlay.textContent = `Busted @ ${multiplier.toFixed(2)}x`;
@@ -2564,9 +2585,9 @@
             const betAmount = parseFloat(betAmountInput.value);
             const autoCashout = parseFloat(autoCashoutInput.value);
 
-            if (isNaN(betAmount) || betAmount <= 0) return showMessage("Invalid bet", "var(--danger-color)");
-            if (isNaN(autoCashout) || autoCashout < 1.01) return showMessage("Invalid cashout", "var(--danger-color)");
-            if (betAmount > balance) return showMessage("Insufficient balance", "var(--danger-color)");
+            if (isNaN(betAmount) || betAmount <= 0) return showMessage("Invalid bet amount. Please enter a positive number.", "var(--danger-color)");
+            if (isNaN(autoCashout) || autoCashout < 1.01) return showMessage("Invalid auto cashout. Must be 1.01 or higher.", "var(--danger-color)");
+            if (betAmount > balance) return showMessage("Insufficient balance to place this bet.", "var(--danger-color)");
 
             currentBetPlaced = betAmount;
             await placeBet(betAmount, autoCashout);
@@ -2575,15 +2596,21 @@
         loginButton.addEventListener('click', async () => {
             const phone = loginMobileInput.value.trim();
             const password = loginPasswordInput.value.trim();
+            showSpinner();
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: phone + '@princealexjet.com',
                 password: password
             });
+            hideSpinner();
 
             if (error) {
                 loginMessageDisplay.textContent = error.message;
+                loginMobileInput.classList.add('input-error');
+                loginPasswordInput.classList.add('input-error');
             } else {
                 loginMessageDisplay.textContent = 'Login successful!';
+                loginMobileInput.classList.remove('input-error');
+                loginPasswordInput.classList.remove('input-error');
                 hideModal(loginModal);
             }
         });
@@ -2593,18 +2620,45 @@
             const password = signupPasswordInput.value.trim();
             const nickname = signupNicknameInput.value.trim();
 
+            // Basic validation
+            if (phone.length < 8 || !/^\d+$/.test(phone)) {
+                signupMessageDisplay.textContent = "Please enter a valid mobile number (digits only, at least 8 digits).";
+                signupMobileInput.classList.add('input-error');
+                return;
+            }
+            if (password.length < 6) { // Supabase default minimum password length
+                signupMessageDisplay.textContent = "Password must be at least 6 characters long.";
+                signupPasswordInput.classList.add('input-error');
+                return;
+            }
+            if (nickname.length < 3) {
+                signupMessageDisplay.textContent = "Nickname must be at least 3 characters long.";
+                signupNicknameInput.classList.add('input-error');
+                return;
+            }
+
+            signupMobileInput.classList.remove('input-error');
+            signupPasswordInput.classList.remove('input-error');
+            signupNicknameInput.classList.remove('input-error');
+
+            showSpinner();
             const { data, error } = await supabaseClient.auth.signUp({
                 email: phone + '@princealexjet.com',
                 password: password,
                 options: { data: { nickname: nickname } }
             });
+            hideSpinner();
 
             if (error) {
                 signupMessageDisplay.textContent = error.message;
+                // Add error class to relevant input based on error type if possible
+                if (error.message.includes('User already registered')) {
+                    signupMobileInput.classList.add('input-error');
+                }
             } else if (data.user) {
                 await supabaseClient.from('wallets').insert({ user_id: data.user.id, balance: 0, bonus: 0, withdrawable: 0 });
                 await supabaseClient.from('profiles').insert({ id: data.user.id, phone: phone, nickname: nickname });
-                signupMessageDisplay.textContent = 'Account created successfully!';
+                signupMessageDisplay.textContent = 'Account created successfully! Please log in.';
                 hideModal(signupModal);
                 showModal(loginModal);
             }
@@ -2612,9 +2666,17 @@
 
         topUpNowButton.addEventListener('click', async () => {
             const amount = parseFloat(depositAmountInput.value);
-            if (amount < 10) return showMessage("Minimum deposit is 10", "var(--danger-color)", messageDisplay);
+            if (isNaN(amount) || amount < 10) {
+                showMessage("Minimum deposit is 10 KES.", "var(--danger-color)", depositWithdrawModal.querySelector('.modal-message-display') || messageDisplay);
+                depositAmountInput.classList.add('input-error');
+                return;
+            }
+            depositAmountInput.classList.remove('input-error');
+            showSpinner();
             await updateWalletAmount(amount);
             await loadUserData();
+            hideSpinner();
+            showMessage(`Successfully deposited ${amount.toFixed(2)} KES.`, "var(--success-color)", depositWithdrawModal.querySelector('.modal-message-display') || messageDisplay);
         });
 
         withdrawNowButton.addEventListener('click', async () => {
@@ -2624,22 +2686,112 @@
             const { data: { user } } = await supabaseClient.auth.getUser();
             const { data: wallet } = await supabaseClient.from('wallets').select('*').eq('user_id', user.id).single();
 
+            if (isNaN(amount) || amount < 100) {
+                showMessage("Minimum withdrawal is 100 KES.", "var(--danger-color)", depositWithdrawModal.querySelector('.modal-message-display') || messageDisplay);
+                withdrawAmountInput.classList.add('input-error');
+                return;
+            }
+            withdrawAmountInput.classList.remove('input-error');
+
             if ((wallet?.withdrawable || 0) >= total) {
+                showSpinner();
                 await updateWalletAmount(-total);
                 await supabaseClient.from('transactions').insert({ user_id: user.id, type: 'withdraw', amount: amount, status: 'pending' });
                 await loadUserData();
-                showMessage("Withdrawal requested!", "var(--success-color)");
+                hideSpinner();
+                showMessage("Withdrawal requested! Please allow time for processing.", "var(--success-color)", depositWithdrawModal.querySelector('.modal-message-display') || messageDisplay);
             } else {
-                showMessage("Insufficient withdrawable balance", "var(--danger-color)");
+                showMessage("Insufficient withdrawable balance.", "var(--danger-color)", depositWithdrawModal.querySelector('.modal-message-display') || messageDisplay);
             }
         });
         
+        // Update toDisburseSpan on withdraw amount input change
+        withdrawAmountInput.addEventListener('input', () => {
+            const amount = parseFloat(withdrawAmountInput.value);
+            const fee = 5;
+            if (!isNaN(amount) && amount >= 0) {
+                toDisburseSpan.textContent = (amount - fee).toFixed(2);
+            } else {
+                toDisburseSpan.textContent = '0.00';
+            }
+        });
+
         document.querySelector('[data-tab="my-bets"]').addEventListener('click', loadMyBetHistory);
-        dropdownLogout.addEventListener('click', async () => { await supabaseClient.auth.signOut(); });
+        dropdownLogout.addEventListener('click', async () => { 
+            showSpinner();
+            await supabaseClient.auth.signOut(); 
+            hideSpinner();
+        });
 
         allCloseModalButtons.forEach(button => button.addEventListener('click', (e) => hideModal(document.getElementById(e.target.dataset.modalClose))));
         showSignupLink.addEventListener('click', (e) => { e.preventDefault(); hideModal(loginModal); showModal(signupModal); });
         showLoginLink.addEventListener('click', (e) => { e.preventDefault(); hideModal(signupModal); showModal(loginModal); });
+        dropdownDepositWithdraw.addEventListener('click', (e) => { e.preventDefault(); accountDropdown.classList.remove('show'); showModal(depositWithdrawModal); });
+        dropdownHowToPlay.addEventListener('click', (e) => { e.preventDefault(); accountDropdown.classList.remove('show'); showModal(howToPlayModal); });
+        dropdownChangePassword.addEventListener('click', (e) => { e.preventDefault(); accountDropdown.classList.remove('show'); showModal(changePasswordModal); });
+        showPasswordResetLink.addEventListener('click', (e) => { e.preventDefault(); hideModal(loginModal); showModal(passwordResetModal); });
+        backToLoginLink.addEventListener('click', (e) => { e.preventDefault(); hideModal(passwordResetModal); showModal(loginModal); });
+
+        // Password Reset Logic
+        resetPasswordButton.addEventListener('click', async () => {
+            const mobile = resetMobileInput.value.trim();
+            if (!mobile) {
+                passwordResetMessageDisplay.textContent = "Please enter your mobile number.";
+                resetMobileInput.classList.add('input-error');
+                return;
+            }
+            resetMobileInput.classList.remove('input-error');
+            showSpinner();
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(mobile + '@princealexjet.com');
+            hideSpinner();
+            if (error) {
+                passwordResetMessageDisplay.textContent = error.message;
+            } else {
+                passwordResetMessageDisplay.textContent = "Password reset link sent to your mobile number (via email). Please check your email.";
+            }
+        });
+
+        // Change Password Logic
+        updatePasswordButton.addEventListener('click', async () => {
+            const currentPassword = currentPasswordInput.value;
+            const newPassword = newPasswordInput.value;
+            const confirmNewPassword = confirmNewPasswordInput.value;
+
+            if (newPassword.length < 6) {
+                changePasswordMessageDisplay.textContent = "New password must be at least 6 characters long.";
+                newPasswordInput.classList.add('input-error');
+                return;
+            }
+            if (newPassword !== confirmNewPassword) {
+                changePasswordMessageDisplay.textContent = "New passwords do not match.";
+                newPasswordInput.classList.add('input-error');
+                confirmNewPasswordInput.classList.add('input-error');
+                return;
+            }
+            
+            newPasswordInput.classList.remove('input-error');
+            confirmNewPasswordInput.classList.remove('input-error');
+
+            showSpinner();
+            // Supabase doesn't directly support changing password with current password in client-side auth
+            // The standard flow is to send a reset email. For this simulation, we'll simplify.
+            // In a real app, you'd typically verify current password on your backend or use a reset flow.
+            // For now, we'll just update the user's password directly assuming the user is logged in.
+            const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+            hideSpinner();
+
+            if (error) {
+                changePasswordMessageDisplay.textContent = error.message;
+            } else {
+                changePasswordMessageDisplay.textContent = "Password updated successfully!";
+                currentPasswordInput.value = '';
+                newPasswordInput.value = '';
+                confirmNewPasswordInput.value = '';
+                // Optionally hide modal after success
+                setTimeout(() => hideModal(changePasswordModal), 2000);
+            }
+        });
+
 
         // --- Initial Load ---
         window.onload = () => {
@@ -2653,6 +2805,9 @@
             startOnlineUsersFluctuation();
             startPreRoundCountdown();
             document.body.addEventListener('click', initializeAudio, { once: true });
+
+            // Start the continuous animation loop
+            animate();
         };
 
         window.addEventListener('resize', () => {
@@ -2661,7 +2816,7 @@
             confettiCanvas.width = confettiCanvas.clientWidth;
             confettiCanvas.height = confettiCanvas.clientHeight;
             initStars();
-            drawGraph();
+            // No need to call drawGraph directly here, animate() will handle it
         });
 
         supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -2671,6 +2826,87 @@
                 window.location.reload();
             }
         });
+
+        // Online Users Fluctuation
+        function startOnlineUsersFluctuation() {
+            onlineUsersFluctuationInterval = setInterval(() => {
+                const fluctuation = Math.floor(Math.random() * 11) - 5; // -5 to +5
+                let newOnlineUsers = baseOnlineUsers + fluctuation;
+                if (newOnlineUsers < 50) newOnlineUsers = 50; // Minimum online users
+                onlineUsersCount.textContent = newOnlineUsers;
+
+                // Simulate playing users as a percentage of online users
+                const playingPercentage = Math.random() * (0.4 - 0.2) + 0.2; // 20% to 40%
+                playingUsersCount.textContent = Math.floor(newOnlineUsers * playingPercentage);
+            }, 5000); // Update every 5 seconds
+        }
+
+        function updateOnlineAndPlayingCounts() {
+            // Initial update
+            onlineUsersCount.textContent = baseOnlineUsers;
+            playingUsersCount.textContent = Math.floor(baseOnlineUsers * (Math.random() * (0.4 - 0.2) + 0.2));
+        }
+
+        // Confetti effect (simple example)
+        let confetti = [];
+        const MAX_CONFETTI = 100;
+
+        function randomColor() {
+            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function createConfettiPiece(x, y) {
+            return {
+                x: x,
+                y: y,
+                size: Math.random() * 8 + 5,
+                color: randomColor(),
+                velX: (Math.random() - 0.5) * 10,
+                velY: (Math.random() - 1) * 10,
+                alpha: 1,
+                gravity: 0.5,
+                rotation: Math.random() * 360,
+                rotationSpeed: Math.random() * 10 - 5
+            };
+        }
+
+        function updateConfetti() {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            for (let i = confetti.length - 1; i >= 0; i--) {
+                let p = confetti[i];
+                p.velY += p.gravity;
+                p.x += p.velX;
+                p.y += p.velY;
+                p.alpha -= 0.01;
+                p.rotation += p.rotationSpeed;
+
+                if (p.alpha <= 0 || p.y > confettiCanvas.height) {
+                    confetti.splice(i, 1);
+                }
+
+                confettiCtx.save();
+                confettiCtx.translate(p.x, p.y);
+                confettiCtx.rotate(p.rotation * Math.PI / 180);
+                confettiCtx.fillStyle = p.color;
+                confettiCtx.globalAlpha = p.alpha;
+                confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                confettiCtx.restore();
+            }
+            if (confetti.length > 0) {
+                requestAnimationFrame(updateConfetti);
+            }
+        }
+
+        function startConfetti() {
+            confetti = []; // Clear existing confetti
+            const centerX = confettiCanvas.width / 2;
+            const centerY = confettiCanvas.height / 2;
+            for (let i = 0; i < MAX_CONFETTI; i++) {
+                confetti.push(createConfettiPiece(centerX, centerY));
+            }
+            updateConfetti(); // Start the confetti animation loop
+        }
 
     </script>
 </body>
