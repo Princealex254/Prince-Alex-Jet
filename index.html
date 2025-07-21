@@ -12,6 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     <!-- CryptoJS for provably fair model -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
         /* General Styling */
         :root {
@@ -937,10 +939,12 @@
             text-align: right;
             white-space: nowrap;
         }
+
         .players-table .cashout-cell.cashed-out {
             color: var(--success-color);
             font-weight: bold;
         }
+
         .players-table .cashout-cell.busted {
             color: var(--danger-color);
         }
@@ -952,33 +956,38 @@
             font-family: var(--font-family-body);
             font-size: 0.9rem;
         }
+
         .leaderboard-table th, .leaderboard-table td {
             padding: 10px 8px;
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .leaderboard-table th {
             background-color: var(--table-header-bg);
             color: var(--accent-color);
             font-weight: 700;
             text-transform: uppercase;
         }
+
         .leaderboard-table tr:nth-child(odd) {
             background-color: var(--table-row-odd);
         }
+
         .leaderboard-table tr:nth-child(even) {
             background-color: var(--table-row-even);
         }
+
         .leaderboard-table .rank-cell {
             font-weight: bold;
             color: var(--accent-color);
             text-align: center;
         }
+
         .leaderboard-table .multiplier-cell, .leaderboard-table .winnings-cell {
             text-align: right;
             font-weight: bold;
         }
-
 
         /* History Tab specific styles (re-using crash-history-container styles) */
         #history-tab-content {
@@ -990,6 +999,7 @@
             overflow-y: auto;
             transition: background-color 0.5s ease, border-color 0.5s ease;
         }
+
         #history-tab-content h3 {
             margin: 0 0 10px 0;
             color: var(--accent-color);
@@ -1124,22 +1134,20 @@
             margin: 5px 0 0;
             color: var(--text-color);
         }
-        
+
         .modal-input-group {
             margin-bottom: 15px;
             position: relative; /* For tooltip positioning */
         }
-        
+
         .modal-input-group label {
             display: block;
             margin-bottom: 5px;
             color: var(--accent-color);
             font-family: var(--font-family-body);
         }
-        
-        .modal-input-group input[type="number"],
-        .modal-input-group input[type="text"],
-        .modal-input-group input[type="password"] {
+
+        .modal-input-group input[type="number"], .modal-input-group input[type="text"], .modal-input-group input[type="password"] {
             width: calc(100% - 20px);
             padding: 10px;
             background-color: rgba(0,0,0,0.3);
@@ -1187,223 +1195,137 @@
         }
 
         .modal-footer {
-            text-align: right;
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.6);
-            margin-top: 15px;
-        }
-
-        .modal-link {
-            display: block;
             text-align: center;
-            margin-top: 15px;
-            color: var(--accent-color);
-            text-decoration: none;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.2);
             font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
         }
-        .modal-link:hover {
-            text-decoration: underline;
-        }
-
-        /* New: Modal Message Display */
-        .modal-message-display {
-            text-align: center;
-            font-size: 0.95rem;
-            min-height: 20px;
-            margin-bottom: 10px;
-            color: white;
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid var(--accent-color);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 10px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-            display: none; /* Hidden by default */
-        }
-
-        /* Footer Styles */
-        .footer {
-            width: 100%;
-            background-color: var(--tab-bg-inactive); /* Use theme variable */
-            padding: 20px;
-            margin-top: auto;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
-            transition: background-color 0.5s ease;
-        }
-
-        .footer p {
-            margin: 5px 0;
-        }
-
-        .footer a {
-            color: var(--accent-color);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer a:hover {
-            color: #ffeb3b;
-        }
-
-        /* Floating WhatsApp Button */
-        .whatsapp-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #25D366;
-            color: white;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2.5rem;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-            transition: transform 0.2s ease-in-out, background-color 0.2s ease;
-            z-index: 100;
-        }
-
-        .whatsapp-button:hover {
-            transform: scale(1.1);
-            background-color: #1DA851;
-        }
-
 
         /* Responsive Design */
-        @media (max-width: 900px) {
+        @media (max-width: 768px) {
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .site-logo {
+                width: 100%;
+                text-align: center;
+            }
+            .top-bar-left, .top-bar-center {
+                width: 100%;
+                justify-content: center;
+            }
             .main-content-area {
                 flex-direction: column;
                 align-items: center;
             }
-            .game-container, .right-sidebar {
-                width: 95%;
-                max-width: 800px;
+            .game-container, .right-sidebar, .game-data-sections, .top-banner {
                 min-width: unset;
+                width: 95%;
             }
-            .right-sidebar {
-                margin-top: 20px;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .top-bar {
-                padding: 10px;
-                justify-content: center;
-            }
-            .top-bar-left, .top-bar-center {
-                flex-basis: 100%;
-                justify-content: center;
-                gap: 5px;
-            }
-            .site-logo {
-                font-size: 1.3rem;
-            }
-            .top-button {
-                padding: 6px 10px;
-                font-size: 0.75rem;
-            }
-            .balance-info {
-                font-size: 0.8rem;
-            }
-
-            .top-banner {
-                flex-direction: column;
-                text-align: center;
-                padding: 10px 15px;
+            .promo-image-container {
+                display: none; /* Hide image on small screens */
             }
             .promo-text-content {
                 align-items: center;
+                text-align: center;
             }
-            .promo-content {
-                font-size: 1.2rem;
+            .controls {
+                grid-template-columns: 1fr;
             }
-            .promo-button {
-                padding: 8px 15px;
-                font-size: 0.9rem;
-            }
-            h1 { font-size: 2rem; }
-            .game-screen { height: 300px; }
-            #multiplier-display-overlay { font-size: 3.5rem; }
-            #countdown-timer-overlay { font-size: 4.5rem; }
-            #busted-text-overlay { font-size: 2.2rem; }
-            .button { font-size: 1.2rem; padding: 12px; }
-            .info-box p { font-size: 1.2rem; }
-            .quick-bet-button { font-size: 0.9rem; padding: 6px 10px; max-width: 60px; }
-            
-            .history-item {
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 5px 0;
-            }
-            .history-item span {
-                width: 100%;
-                text-align: left;
-            }
-            .history-item .bet-amount, .history-item .status {
-                text-align: left;
-            }
-
-            .players-table th, .players-table td {
-                padding: 8px 5px;
+            .chat-messages {
                 font-size: 0.8rem;
             }
+        }
 
-            .modal-content {
-                width: 95%;
-                padding: 15px;
-            }
-            .modal-header {
-                font-size: 1.5rem;
-            }
-            .modal-tab-button {
-                font-size: 0.9rem;
-            }
-            .balance-box p {
-                font-size: 1.2rem;
-            }
-            .modal-button {
-                font-size: 1rem;
-                padding: 10px;
-            }
-            .modal-instructions {
-                font-size: 0.8rem;
-            }
-            .whatsapp-button {
-                width: 50px;
-                height: 50px;
-                font-size: 2rem;
-            }
+        /* Tooltip container */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        /* Tooltip text */
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position the tooltip above the text */
+            left: 50%;
+            margin-left: -100px; /* Use half of the width to center the tooltip */
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: var(--font-family-body);
+            font-size: 0.8rem;
+        }
+
+        /* Tooltip arrow */
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+        /* Show the tooltip text when you hover over the tooltip container */
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* General button styling for inputs */
+        .input-with-button {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .input-with-button input {
+            flex-grow: 1;
+            margin-bottom: 0; /* Override default input margin */
+        }
+
+        .input-with-button .clear-button {
+            background-color: var(--danger-color);
+            color: var(--text-color);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            height: fit-content;
+        }
+
+        .input-with-button .clear-button:hover {
+            background-color: #ef5350;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .auth-buttons .button {
+            flex: 1;
+            font-size: 1.1rem;
+            padding: 10px;
+        }
+        #signupModal .modal-input-group,
+        #loginModal .modal-input-group {
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -1820,6 +1742,13 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
+    <script>
+        const { createClient } = supabase
+        const supabaseClient = createClient(
+          'https://yigtwtapnqbpmnoeitpa.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpZ3R3dGFwbnFicG1ub2VpdHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDA4MTEsImV4cCI6MjA2ODY3NjgxMX0.rKF2MwO94wPeT2V0rDsypNcwjOk2wN9rMwmiYo79T2g'
+        );
+    </script>
     <script defer>
         // --- Graphing constants ---
         const PADDING_X = 50;
@@ -1936,62 +1865,50 @@
 
 
         // --- Game State ---
-        let balance = parseFloat(localStorage.getItem('princeAlexJetBalance')) || 1000;
-        let betAmount = parseFloat(localStorage.getItem('princeAlexJetBetAmount')) || 10; 
+        let balance = 0;
+        let betAmount = 10; 
         let multiplier = 1.00;
         let crashMultiplier = 1.00;
         let isGameRunning = false; 
         let hasCashedOut = false; 
         let gameLoopInterval = null; 
-        let isAutoBetEnabled = JSON.parse(localStorage.getItem('princeAlexJetAutoBetEnabled')) || false;
+        let isAutoBetEnabled = false;
         let currentBetPlaced = 0; 
+        let currentBetId = null;
         let roundCountdownInterval = null; 
         let preRoundTimer = 0; 
-        const crashHistory = JSON.parse(localStorage.getItem('princeAlexJetCrashHistory')) || []; 
+        const crashHistory = []; 
         const MAX_HISTORY_ITEMS = 10; 
-
-        const playerBetHistory = JSON.parse(localStorage.getItem('princeAlexJetPlayerBetHistory')) || []; 
-        let currentTicketId = null; 
 
         let curvePoints = [{ x: 0, y: 0 }]; 
         let gameTicks = 0; 
 
         // Authentication State
-        let isLoggedIn = JSON.parse(localStorage.getItem('princeAlexJetIsLoggedIn')) || false;
-        let currentUserId = localStorage.getItem('princeAlexJetCurrentUserId') || null; // Mobile number
-        let currentUserNickname = localStorage.getItem('princeAlexJetCurrentUserNickname') || null;
-        let simulatedUsers = JSON.parse(localStorage.getItem('princeAlexJetSimulatedUsers')) || []; // Array of {mobile, nickname, password, balance}
+        let isLoggedIn = false;
+        let currentUserId = null;
+        let currentUserNickname = null;
 
         // Provably Fair Seeds and Nonce
-        let serverSeed = localStorage.getItem('princeAlexJetServerSeed') || generateRandomString(32); // Generate on load, persist for session
-        const clientSeed = "player-alex"; // Fixed client seed
-        let nonce = parseInt(localStorage.getItem('princeAlexJetNonce')) || 0; // Nonce persists and increments
+        let serverSeed = generateRandomString(32);
+        const clientSeed = "player-alex";
+        let nonce = 0;
 
-        // Simulated Player Names (expanded list)
+        // Simulated Player Names
         const allPlayerNames = [
             "JulianaH123", "Josemwai", "Josephwainaina", "FunnyDiudi", "Cheche", "BlackHawk", "EatPeople", "Amanda",
             "BraveHeart", "LuckyCharm", "QuickCash", "GameMaster", "CryptoKing", "JetSetter", "HighRoller", "BetBoss",
             "WinStreak", "FlyHigh", "CashFlow", "AcePilot", "SkyWalker", "GoldenWings", "TopGun", "FastCash",
-            "MoneyMaker", "RiskTaker", "FortuneHunter", "PixelPusher", "CodeBreaker", "DataMiner", "NetNinja",
-            "WebWizard", "ByteBuddy", "LogicLord", "AlgoAce", "ScriptKid", "HashHero", "TokenTitan", "BlockChamp",
-            "ChainLink", "QuantumQuinn", "CyberSamurai", "DigitalDiva", "VirtualViking", "ElectricEagle", "SolarSailor",
-            "CosmicCat", "StarGazer", "MoonRider", "GalaxyGamer", "CometCrusher", "NebulaNomad", "PlasmaPilot",
-            "OrbitOgre", "AstroAce", "ZenithZephyr", "PulsarPrince", "NovaKnight", "Supernova", "DarkMatter",
-            "LightSpeed", "Infinity", "Horizon", "Vortex", "Echo", "Mirage", "Phoenix", "Titan", "Olympus",
-            "Atlantis", "ElDorado", "ShangriLa", "Xanadu", "Camelot", "Avalon", "Asgard", "Valhalla", "Olympia",
-            "Zion", "Eden", "Utopia", "Arcadia", "Elysium", "Pandora", "Nirvana", "Genesis", "Exodus", "Odyssey",
-            "Voyager", "Pathfinder", "Explorer", "Pioneer", "Navigator", "Sentinel", "Guardian", "Vigilante",
-            "Shadow", "Phantom", "Specter", "Ghost", "Ninja", "Samurai", "Ronin", "Sensei", "Master", "Legend"
+            "MoneyMaker", "RiskTaker", "FortuneHunter"
         ];
         
         // Simulated Player Data for "Players" tab
         const simulatedPlayers = []; 
         const NUM_SIMULATED_PLAYERS = 15; 
 
-        let baseOnlineUsers = 90; // Starting baseline for online users
-        let onlineUsersFluctuationInterval = null; // Interval for fluctuating online users
+        let baseOnlineUsers = 90;
+        let onlineUsersFluctuationInterval = null;
 
-        // Airplane SVG path (simple representation)
+        // Airplane SVG path
         const airplanePath = new Path2D("M20 0 L0 10 L0 12 L8 12 L8 20 L10 20 L10 12 L18 12 L18 10 L20 0 Z"); 
 
         // Sound Effects
@@ -2000,27 +1917,14 @@
 
         function initializeAudio() {
             if (isSoundInitialized) return;
-            Tone.start(); // Start Tone.js audio context
-            gameStartSynth = new Tone.Synth({
-                oscillator: { type: "sine" },
-                envelope: { attack: 0.05, decay: 0.1, sustain: 0.2, release: 0.5 }
-            }).toDestination();
-            cashoutSynth = new Tone.Synth({
-                oscillator: { type: "triangle" },
-                envelope: { attack: 0.02, decay: 0.1, sustain: 0.1, release: 0.2 }
-            }).toDestination();
-            crashSynth = new Tone.NoiseSynth({
-                envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.3 }
-            }).toDestination();
+            Tone.start();
+            gameStartSynth = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.05, decay: 0.1, sustain: 0.2, release: 0.5 } }).toDestination();
+            cashoutSynth = new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.1, sustain: 0.1, release: 0.2 } }).toDestination();
+            crashSynth = new Tone.NoiseSynth({ envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.3 } }).toDestination();
             isSoundInitialized = true;
             console.log("Audio context initialized.");
         }
 
-        /**
-         * Generates a random alphanumeric string for seeds.
-         * @param {number} length - The desired length of the string.
-         * @returns {string} A random alphanumeric string.
-         */
         function generateRandomString(length) {
             const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let result = '';
@@ -2030,303 +1934,219 @@
             return result;
         }
 
-        /**
-         * Provably Fair Crash Multiplier Function.
-         * This function converts an HMAC SHA256 hash into a crash multiplier.
-         * The formula ensures a minimum of 1.00x and a distribution that can go very high.
-         * @returns {number} The calculated crash multiplier.
-         */
         function getCrashMultiplier() {
-            nonce++; // Increment nonce for each new round
-            localStorage.setItem('princeAlexJetNonce', nonce.toString()); // Persist nonce
-
-            // Ensure CryptoJS is loaded before use
-            if (typeof CryptoJS === 'undefined' || !CryptoJS.HmacSHA256) {
-                console.error("CryptoJS not loaded. Cannot generate provably fair multiplier.");
-                return 1.00; // Fallback to 1.00x if crypto is not available
-            }
-
-            // Generate HMAC SHA256 hash using the nonce, client seed, and server seed
+            nonce++;
             const hmac = CryptoJS.HmacSHA256(`${nonce}:${clientSeed}`, serverSeed).toString();
-
-            // Take the first 13 characters of the hash for the main crash calculation.
-            // A 13-character hex string gives 52 bits of entropy, which is sufficient for JS numbers (53-bit integers).
             const hex = hmac.substring(0, 13);
             const intVal = parseInt(hex, 16);
-
-            // Calculate the maximum possible value for a 13-character hex number.
-            // This is used to normalize the intVal to a float between 0 and 1.
-            const max13Hex = 0xFFFFFFFFFFFFF; // Represents 16^13 - 1
-
-            // Normalize intVal to a float between 0 and 1 (exclusive of 1).
-            // Adding 1 to max13Hex creates a range [0, 1).
+            const max13Hex = 0xFFFFFFFFFFFFF;
             let normalized = intVal / (max13Hex + 1);
-
-            // Ensure 'normalized' is strictly less than 1 to prevent division by zero or infinity.
             if (normalized >= 1) {
-                normalized = 0.9999999999999999; // Set to the largest possible float less than 1
+                normalized = 0.9999999999999999;
             }
-
-            // Apply the crash game formula: C = 100 / (100 - (normalized * 99))
-            // This formula maps a [0, 1) random number to a crash point from 1.00x to infinity.
-            // If normalized is 0, C = 100 / (100 - 0) = 1.00
-            // If normalized is close to 1 (e.g., 0.9999...), C becomes very large.
             const crash = 100 / (100 - (normalized * 99));
-
-            // Simulate a 1% chance of an instant bust at 1.00x.
-            // This check uses a different part of the hash (14th hex character)
-            // to avoid interfering with the main crash calculation's distribution.
             const bustCheckHex = hmac.substring(13, 14);
             const bustCheckInt = parseInt(bustCheckHex, 16);
-            if (bustCheckInt % 100 < 1) { // Approximately 1% chance
+            if (bustCheckInt % 100 < 1) {
                 return 1.00;
             }
-
-            // Ensure the minimum crash multiplier is 1.00x and format to 2 decimal places.
             return Math.max(1.00, parseFloat(crash.toFixed(2)));
         }
 
+        async function loadUserData() {
+            const { data: { user }, error } = await supabaseClient.auth.getUser();
 
-        /**
-         * Saves current game data to localStorage.
-         */
-        function saveGameData() {
-            localStorage.setItem('princeAlexJetBalance', balance.toFixed(2));
-            localStorage.setItem('princeAlexJetBetAmount', betAmountInput.value);
-            localStorage.setItem('princeAlexJetAutoBetEnabled', JSON.stringify(isAutoBetEnabled));
-            localStorage.setItem('princeAlexJetAutoCashoutValue', autoCashoutInput.value);
-            localStorage.setItem('princeAlexJetCrashHistory', JSON.stringify(crashHistory));
-            localStorage.setItem('princeAlexJetPlayerBetHistory', JSON.stringify(playerBetHistory));
-            localStorage.setItem('princeAlexJetIsLoggedIn', JSON.stringify(isLoggedIn));
-            localStorage.setItem('princeAlexJetCurrentUserId', currentUserId);
-            localStorage.setItem('princeAlexJetCurrentUserNickname', currentUserNickname);
-            localStorage.setItem('princeAlexJetSimulatedUsers', JSON.stringify(simulatedUsers));
-            localStorage.setItem('princeAlexJetTheme', document.body.classList.contains('light-theme') ? 'light' : 'dark'); // Save theme
-            localStorage.setItem('princeAlexJetServerSeed', serverSeed); // Save server seed
-            localStorage.setItem('princeAlexJetNonce', nonce.toString()); // Save nonce
-            console.log("saveGameData: Data saved to localStorage.");
-            console.log("simulatedUsers after save:", simulatedUsers);
+            if (error || !user) return console.error("Not logged in");
+            isLoggedIn = true;
+            currentUserId = user.id;
+
+            // Load Profile
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('nickname, phone')
+                .eq('id', user.id)
+                .single();
+            
+            currentUserNickname = profile?.nickname || 'Player';
+
+            // Load Wallet
+            let { data: wallet } = await supabaseClient
+                .from('wallets')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+            
+            if (!wallet) {
+                 const { data: newWallet } = await supabaseClient.from('wallets').insert({ user_id: user.id, balance: 1000, bonus: 100, withdrawable: 900 }).select().single();
+                 wallet = newWallet;
+            }
+            
+            balance = wallet?.balance || 0;
+
+            // Update UI
+            dropdownUserInfo.innerHTML = `${profile?.nickname || 'Player'}<br>${profile?.phone || ''}`;
+            modalBalance.textContent = (wallet?.balance || 0).toFixed(2);
+            modalWithdrawable.textContent = (wallet?.withdrawable || 0).toFixed(2);
+            modalBonus.textContent = (wallet?.bonus || 0).toFixed(2);
+            topBarBalance.style.display = 'inline';
+            topBarBalance.textContent = `${(wallet?.balance || 0).toFixed(2)} KES`;
+            updateAuthUI();
         }
 
-        /**
-         * Loads game data from localStorage.
-         */
-        function loadGameData() {
-            console.log("loadGameData: Attempting to load data from localStorage.");
-            // Balance
-            const storedBalance = localStorage.getItem('princeAlexJetBalance');
-            if (storedBalance !== null) {
-                balance = parseFloat(storedBalance);
-            } else {
-                balance = 1000; // Default if nothing stored
-            }
+        async function updateWalletAmount(amountChange, bonusChange = 0) {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
 
-            // Bet Amount
-            const storedBetAmount = localStorage.getItem('princeAlexJetBetAmount');
-            if (storedBetAmount !== null) {
-                betAmount = parseFloat(storedBetAmount);
-                betAmountInput.value = betAmount;
-            } else {
-                betAmount = 10; // Default
-                betAmountInput.value = 10;
-            }
+            const { data: wallet } = await supabaseClient
+                .from('wallets')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
 
-            // Auto Bet Enabled
-            const storedAutoBetEnabled = localStorage.getItem('princeAlexJetAutoBetEnabled');
-            if (storedAutoBetEnabled !== null) {
-                isAutoBetEnabled = JSON.parse(storedAutoBetEnabled);
-                autoBetToggle.checked = isAutoBetEnabled;
-            } else {
-                isAutoBetEnabled = false; // Default
-                autoBetToggle.checked = false;
-            }
+            const newBalance = (wallet?.balance || 0) + amountChange;
+            const newBonus = (wallet?.bonus || 0) + bonusChange;
+            const newWithdrawable = newBalance - newBonus;
 
-            // Auto Cashout Value
-            const storedAutoCashoutValue = localStorage.getItem('princeAlexJetAutoCashoutValue');
-            if (storedAutoCashoutValue !== null) {
-                autoCashoutInput.value = parseFloat(storedAutoCashoutValue);
-            } else {
-                autoCashoutInput.value = 1.1; // Default
-            }
-
-            // Crash History
-            const storedCrashHistory = localStorage.getItem('princeAlexJetCrashHistory');
-            if (storedCrashHistory !== null) {
-                crashHistory.length = 0; // Clear existing array
-                JSON.parse(storedCrashHistory).forEach(item => crashHistory.push(item));
-            } else {
-                crashHistory.length = 0; // Empty by default
-            }
-
-            // Player Bet History
-            const storedPlayerBetHistory = localStorage.getItem('princeAlexJetPlayerBetHistory');
-            if (storedPlayerBetHistory !== null) {
-                playerBetHistory.length = 0; // Clear existing array
-                JSON.parse(storedPlayerBetHistory).forEach(item => playerBetHistory.push(item));
-            } else {
-                playerBetHistory.length = 0; // Empty by default
-            }
-
-            // Authentication State
-            const storedIsLoggedIn = localStorage.getItem('princeAlexJetIsLoggedIn');
-            if (storedIsLoggedIn !== null) {
-                isLoggedIn = JSON.parse(storedIsLoggedIn);
-            } else {
-                isLoggedIn = false;
-            }
-
-            currentUserId = localStorage.getItem('princeAlexJetCurrentUserId');
-            currentUserNickname = localStorage.getItem('princeAlexJetCurrentUserNickname');
-
-            const storedSimulatedUsers = localStorage.getItem('princeAlexJetSimulatedUsers');
-            if (storedSimulatedUsers !== null) {
-                simulatedUsers.length = 0;
-                JSON.parse(storedSimulatedUsers).forEach(user => simulatedUsers.push(user));
-            } else {
-                simulatedUsers.length = 0; // Empty by default
-            }
-
-            // Load Theme
-            const savedTheme = localStorage.getItem('princeAlexJetTheme');
-            if (savedTheme === 'light') {
-                document.body.classList.add('light-theme');
-                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-            } else {
-                document.body.classList.remove('light-theme');
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            }
-
-            // Load Provably Fair data
-            const storedServerSeed = localStorage.getItem('princeAlexJetServerSeed');
-            if (storedServerSeed !== null) {
-                serverSeed = storedServerSeed;
-            } else {
-                serverSeed = generateRandomString(32); // Generate a new one if not found
-                localStorage.setItem('princeAlexJetServerSeed', serverSeed);
-            }
-
-            const storedNonce = localStorage.getItem('princeAlexJetNonce');
-            if (storedNonce !== null) {
-                nonce = parseInt(storedNonce);
-            } else {
-                nonce = 0;
-            }
-
-            console.log("simulatedUsers after load:", simulatedUsers);
-            console.log("isLoggedIn after load:", isLoggedIn);
-            console.log("currentUserId after load:", currentUserId);
-            console.log("currentUserNickname after load:", currentUserNickname);
+            await supabaseClient
+                .from('wallets')
+                .update({
+                balance: newBalance,
+                bonus: newBonus,
+                withdrawable: newWithdrawable,
+                updated_at: new Date()
+                })
+                .eq('user_id', user.id);
+            
+            balance = newBalance;
         }
 
-        /**
-         * Updates the UI elements based on the current authentication state.
-         */
+        async function placeBet(betAmount, autoCashoutAt) {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
+
+            const { data, error } = await supabaseClient.from('bets').insert({
+                user_id: user.id,
+                bet_amount: betAmount,
+                result_status: 'pending',
+                cashout_at: autoCashoutAt
+            }).select().single();
+
+            if (!error && data) {
+                currentBetId = data.id;
+                await updateWalletAmount(-betAmount);
+                console.log("Bet placed!");
+                await loadUserData();
+            } else {
+                console.error(error?.message || "Error placing bet");
+            }
+        }
+        
+        async function resolveBet(betId, resultStatus, multiplier) {
+            const { data: bet } = await supabaseClient.from('bets').select('*').eq('id', betId).single();
+            if (!bet) return;
+            const payout = resultStatus === 'won' ? bet.bet_amount * multiplier : 0;
+
+            await supabaseClient
+                .from('bets')
+                .update({ result_status: resultStatus, multiplier, payout: payout })
+                .eq('id', betId);
+
+            if (payout > 0) {
+                await updateWalletAmount(payout);
+            }
+            await loadUserData();
+        }
+
+        async function loadMyBetHistory() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
+
+            const { data: bets } = await supabaseClient
+                .from('bets')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            const playerHistoryContainer = document.getElementById('player-history-display-tab');
+            // Clear old rows, keeping the header
+            while (playerHistoryContainer.children.length > 1) {
+                playerHistoryContainer.removeChild(playerHistoryContainer.lastChild);
+            }
+
+            bets?.forEach((bet) => {
+                const row = document.createElement('div');
+                row.classList.add('history-item');
+                row.innerHTML = `
+                <span class="ticket-id">${bet.id.slice(0, 6)}</span>
+                <span class="bet-amount">${bet.bet_amount.toFixed(2)}</span>
+                <span class="multiplier-info">${bet.multiplier || '-'}x</span>
+                <span class="status ${bet.result_status === 'won' ? 'status-win' : 'status-loss'}">${bet.result_status}</span>
+                `;
+                playerHistoryContainer.appendChild(row);
+            });
+        }
+
         function updateAuthUI() {
-            console.log("updateAuthUI called. isLoggedIn:", isLoggedIn);
             if (isLoggedIn) {
-                authButton.textContent = 'Account'; // Change button text to "Account"
-                authButton.onclick = () => {
-                    // Toggle visibility of the account dropdown
-                    accountDropdown.classList.toggle('show');
-                    if (accountDropdown.classList.contains('show')) {
-                        dropdownUserInfo.textContent = `${currentUserNickname} | ${currentUserId}`;
-                    }
-                };
+                authButton.textContent = 'Account';
+                authButton.onclick = () => accountDropdown.classList.toggle('show');
                 topBarBalance.style.display = 'inline-block';
                 topBarBalance.textContent = `${balance.toFixed(2)} KES`;
-                
-                // Enable betting controls
                 betButton.disabled = false;
                 betButton.textContent = 'Bet [Next Game]';
-                betButton.style.backgroundColor = 'var(--success-color)';
-                betButton.style.cursor = 'pointer';
                 betAmountInput.disabled = false;
                 quickBetButtons.forEach(btn => btn.disabled = false);
-                autoCashoutInput.disabled = false; // Enable auto cashout input
-                autoBetToggle.disabled = false; // Enable auto bet toggle
-
-                // Set auto-bet toggle state
-                autoBetToggle.checked = isAutoBetEnabled; // Reflect current auto-bet state
-                // If auto-bet is enabled, disable manual bet controls
+                autoCashoutInput.disabled = false;
+                autoBetToggle.disabled = false;
                 if (isAutoBetEnabled) {
                     betButton.disabled = true;
                     betButton.textContent = 'Auto Bet Active';
-                    betButton.style.backgroundColor = '#555';
                     betAmountInput.disabled = true;
                     quickBetButtons.forEach(btn => btn.disabled = true);
                 }
                 messageDisplay.textContent = 'Place your bet to start the round!';
-                messageDisplay.style.color = 'white';
-
             } else {
                 authButton.textContent = 'Login / Sign Up';
-                authButton.onclick = () => {
-                    console.log("Auth button clicked: Opening login modal.");
-                    showModal(loginModal); // Use new showModal function
-                    loginMessageDisplay.textContent = ''; // Clear message on open
-                };
+                authButton.onclick = () => showModal(loginModal);
                 topBarBalance.style.display = 'none';
-                accountDropdown.classList.remove('show'); // Hide dropdown if not logged in
-
-                // Disable betting controls
+                accountDropdown.classList.remove('show');
                 betButton.disabled = true;
                 betButton.textContent = 'Login to Bet';
-                betButton.style.backgroundColor = '#555';
                 betAmountInput.disabled = true;
                 quickBetButtons.forEach(btn => btn.disabled = true);
                 cashoutButton.disabled = true;
                 autoCashoutInput.disabled = true;
                 autoBetToggle.disabled = true;
                 messageDisplay.textContent = 'Login to place your bet!';
-                messageDisplay.style.color = 'var(--accent-color)';
             }
-            updateOnlineAndPlayingCounts(); // Update counts based on login state
         }
 
-        /**
-         * Converts a multiplier value to a canvas Y coordinate.
-         * @param {number} mult - The multiplier value.
-         * @returns {number} The corresponding Y coordinate on the canvas.
-         */
         function multToY(mult) {
             const graphHeight = gameCanvas.height - 2 * PADDING_Y;
             const scaledMult = Math.max(1, mult);
-            // Use dynamicMaxMultiplierY for scaling
             return gameCanvas.height - PADDING_Y - ((scaledMult - 1) / (dynamicMaxMultiplierY - 1)) * graphHeight;
         }
 
-        /**
-         * Converts game ticks to a canvas X coordinate.
-         * @param {number} ticks - The number of game ticks.
-         * @returns {number} The corresponding X coordinate on the canvas.
-         */
         function ticksToX(ticks) {
             const graphWidth = gameCanvas.width - 2 * PADDING_X;
             return PADDING_X + (ticks / MAX_GAME_TICKS_X_SCALE) * graphWidth;
         }
 
-        /**
-         * Initializes the starfield for the canvas background.
-         */
         function initStars() {
-            stars.length = 0; // Clear existing stars
+            stars.length = 0;
             for (let i = 0; i < STARS_COUNT; i++) {
                 stars.push({
                     x: Math.random() * gameCanvas.width,
                     y: Math.random() * gameCanvas.height,
-                    radius: Math.random() * 1.5 + 0.5, // 0.5 to 2.0
-                    alpha: Math.random() * 0.5 + 0.5 // 0.5 to 1.0
+                    radius: Math.random() * 1.5 + 0.5,
+                    alpha: Math.random() * 0.5 + 0.5
                 });
             }
         }
 
-        /**
-         * Draws the graph, including axes, labels, and the flight curve.
-         */
         function drawGraph() {
-            ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height); // Clear the entire canvas
-
-            // Draw stars background
+            ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
             stars.forEach(star => {
                 ctx.beginPath();
                 ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
@@ -2334,7 +2154,6 @@
                 ctx.fill();
             });
 
-            // Set line styles for grid/axes
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.lineWidth = 1;
             ctx.font = '14px var(--font-family-body)';
@@ -2342,22 +2161,16 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            const graphWidth = gameCanvas.width - 2 * PADDING_X;
-            const graphHeight = gameCanvas.height - 2 * PADDING_Y;
-
-            // Draw X-axis
             ctx.beginPath();
             ctx.moveTo(PADDING_X, gameCanvas.height - PADDING_Y);
             ctx.lineTo(gameCanvas.width - PADDING_X, gameCanvas.height - PADDING_Y);
             ctx.stroke();
 
-            // Draw Y-axis
             ctx.beginPath();
             ctx.moveTo(PADDING_X, PADDING_Y);
             ctx.lineTo(PADDING_X, gameCanvas.height - PADDING_Y);
             ctx.stroke();
 
-            // Draw X-axis labels and grid lines (0, 2, 4, 6, 8 seconds/ticks)
             for (let i = 0; i <= 8; i += 2) {
                 const x = ticksToX(i * (MAX_GAME_TICKS_X_SCALE / 8));
                 ctx.fillText(i, x, gameCanvas.height - PADDING_Y / 2);
@@ -2368,18 +2181,17 @@
                 ctx.stroke();
             }
 
-            // Draw Y-axis labels and grid lines dynamically
-            let labelStep = 1; // Default step for labels (e.g., 1.0x, 2.0x)
+            let labelStep = 1;
             if (dynamicMaxMultiplierY >= 100) labelStep = 100;
             else if (dynamicMaxMultiplierY >= 50) labelStep = 10;
             else if (dynamicMaxMultiplierY >= 20) labelStep = 5;
             else if (dynamicMaxMultiplierY >= 5) labelStep = 1;
-            else labelStep = 0.5; // For smaller multipliers like 1.0, 1.5, 2.0
+            else labelStep = 0.5;
 
             for (let i = 1; i <= dynamicMaxMultiplierY; i += labelStep) {
-                const mult = parseFloat(i.toFixed(1)); // Ensure labels are clean floats
+                const mult = parseFloat(i.toFixed(1));
                 const y = multToY(mult);
-                if (y >= PADDING_Y && y <= gameCanvas.height - PADDING_Y) { // Only draw if within bounds
+                if (y >= PADDING_Y && y <= gameCanvas.height - PADDING_Y) {
                     ctx.fillText(`${mult.toFixed(1)}x`, PADDING_X / 2, y);
                     ctx.beginPath();
                     ctx.moveTo(PADDING_X, y);
@@ -2389,18 +2201,13 @@
                 }
             }
 
-
-            // Draw the filled area below the curve
             if (curvePoints.length > 1) {
                 ctx.beginPath();
-                ctx.moveTo(PADDING_X, gameCanvas.height - PADDING_Y); // Start at bottom-left of graph area
+                ctx.moveTo(PADDING_X, gameCanvas.height - PADDING_Y);
                 curvePoints.forEach(point => ctx.lineTo(point.x, point.y));
-                // Close the path by drawing down to the X-axis and back to the start
                 const lastPoint = curvePoints[curvePoints.length - 1];
                 ctx.lineTo(lastPoint.x, gameCanvas.height - PADDING_Y);
                 ctx.closePath();
-
-                // Create a linear gradient for the fill
                 const gradient = ctx.createLinearGradient(0, PADDING_Y, 0, gameCanvas.height - PADDING_Y);
                 gradient.addColorStop(0, varToRgba('--graph-fill-color-top'));
                 gradient.addColorStop(1, varToRgba('--graph-fill-color-bottom'));
@@ -2408,10 +2215,9 @@
                 ctx.fill();
             }
 
-            // Draw the flight curve (line)
             if (curvePoints.length > 1) {
                 ctx.beginPath();
-                ctx.strokeStyle = varToRgba('--graph-line-color'); // Red line
+                ctx.strokeStyle = varToRgba('--graph-line-color');
                 ctx.lineWidth = 3;
                 ctx.moveTo(curvePoints[0].x, curvePoints[0].y);
                 for (let i = 1; i < curvePoints.length; i++) {
@@ -2419,288 +2225,183 @@
                 }
                 ctx.stroke();
 
-                // Draw the airplane at the end of the line if game is running
                 if (isGameRunning) {
                     const lastPoint = curvePoints[curvePoints.length - 1];
                     const prevPoint = curvePoints[curvePoints.length - 2] || curvePoints[0];
-
-                    // Calculate angle for airplane rotation
                     const angle = Math.atan2(lastPoint.y - prevPoint.y, lastPoint.x - prevPoint.x);
-
-                    ctx.save(); // Save current canvas state
-                    ctx.translate(lastPoint.x, lastPoint.y); // Move origin to the end of the line
-                    ctx.rotate(angle); // Rotate to align with the line's slope
-                    ctx.fillStyle = 'white'; // Color of the airplane
-                    ctx.scale(0.8, 0.8); // Adjust size of the airplane
-                    ctx.fill(airplanePath); // Draw the airplane
-                    ctx.restore(); // Restore canvas state
+                    ctx.save();
+                    ctx.translate(lastPoint.x, lastPoint.y);
+                    ctx.rotate(angle);
+                    ctx.fillStyle = 'white';
+                    ctx.scale(0.8, 0.8);
+                    ctx.fill(airplanePath);
+                    ctx.restore();
                 }
             }
-
-            // Draw "Connection: ON" text
             ctx.font = '12px var(--font-family-body)';
             ctx.fillStyle = 'white';
             ctx.textAlign = 'left';
-            ctx.textBaseline = 'bottom'; // Align to bottom for precise placement
-            ctx.fillText('Connection: ON', PADDING_X, gameCanvas.height - 10); // 10px from bottom
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('Connection: ON', PADDING_X, gameCanvas.height - 10);
         }
 
-        /**
-         * Helper function to convert CSS variable to RGBA for canvas.
-         */
         function varToRgba(cssVar) {
             const style = getComputedStyle(document.documentElement);
             return style.getPropertyValue(cssVar).trim();
         }
 
-
-        /**
-         * Initializes the UI elements to their default state for a new pre-round.
-         * This function enables betting controls and resets visual elements.
-         */
         function initializeUIForPreRound() {
-            // Update top bar balance
             topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
-            betAmountInput.value = betAmount; // Set input to last chosen bet or default
+            betAmountInput.value = betAmount;
             cashoutButton.disabled = true;
-            potentialWinDisplay.textContent = '0.00'; // Reset potential win display
+            potentialWinDisplay.textContent = '0.00';
             
-            // Enable bet controls for pre-round ONLY IF LOGGED IN
             if (isLoggedIn) {
                 betButton.disabled = false;
-                betButton.textContent = 'Bet [Next Game]'; // Change text to reflect pre-round state
+                betButton.textContent = 'Bet [Next Game]';
                 betButton.style.backgroundColor = 'var(--success-color)';
-                betButton.style.cursor = 'pointer';
                 betAmountInput.disabled = false;
                 quickBetButtons.forEach(btn => btn.disabled = false);
-                autoCashoutInput.disabled = false; // Enable auto cashout input
-                autoBetToggle.disabled = false; // Enable auto bet toggle
-
-                // Set auto-bet toggle state
-                autoBetToggle.checked = isAutoBetEnabled; // Reflect current auto-bet state
-                // If auto-bet is enabled, disable manual bet controls
+                autoCashoutInput.disabled = false;
+                autoBetToggle.disabled = false;
                 if (isAutoBetEnabled) {
                     betButton.disabled = true;
                     betButton.textContent = 'Auto Bet Active';
-                    betButton.style.backgroundColor = '#555';
                     betAmountInput.disabled = true;
                     quickBetButtons.forEach(btn => btn.disabled = true);
                 }
-                messageDisplay.textContent = 'Next round starts in ' + preRoundTimer + ' seconds. Place your bets!';
-                messageDisplay.style.color = 'white';
-
+                messageDisplay.textContent = `Next round starts in ${preRoundTimer} seconds. Place your bets!`;
             } else {
-                // Keep betting controls disabled if not logged in
                 betButton.disabled = true;
                 betButton.textContent = 'Login to Bet';
-                betButton.style.backgroundColor = '#555';
                 betAmountInput.disabled = true;
                 quickBetButtons.forEach(btn => btn.disabled = true);
                 autoCashoutInput.disabled = true;
                 autoBetToggle.disabled = true;
                 messageDisplay.textContent = 'Login to place your bet!';
-                messageDisplay.style.color = 'var(--accent-color)';
             }
 
-            resetAnimation(); // Reset graph and multiplier display
-            currentBetPlaced = 0; // Reset bet for the upcoming round
-            currentTicketId = null; // Reset ticket ID
-            countdownTimerOverlay.style.display = 'block'; // Show countdown timer
-            multiplierDisplayOverlay.style.display = 'none'; // Hide multiplier during countdown
-            bustedTextOverlay.style.display = 'none'; // Hide busted text
+            resetAnimation();
+            currentBetPlaced = 0;
+            currentBetId = null;
+            countdownTimerOverlay.style.display = 'block';
+            multiplierDisplayOverlay.style.display = 'none';
+            bustedTextOverlay.style.display = 'none';
 
-            // Reset and re-populate simulated players for new round with new names and stakes
-            simulatedPlayers.length = 0; // Clear existing players
-            const usedNames = new Set(); // To ensure unique names
+            simulatedPlayers.length = 0;
+            const usedNames = new Set();
             while (simulatedPlayers.length < NUM_SIMULATED_PLAYERS) {
                 const randomName = allPlayerNames[Math.floor(Math.random() * allPlayerNames.length)];
                 if (!usedNames.has(randomName)) {
                     usedNames.add(randomName);
-                    // Random bet between 50 and 3000
                     const randomBet = Math.floor(Math.random() * (3000 - 50 + 1)) + 50; 
                     simulatedPlayers.push({
-                        id: crypto.randomUUID(), // Unique ID for simulated players
+                        id: crypto.randomUUID(),
                         name: randomName,
                         bet: randomBet,
                         cashout: null,
                         won: null,
-                        status: 'playing', // All simulated players are 'playing' initially
-                        cashoutTarget: null // Will be set when round starts
+                        status: 'playing',
+                        cashoutTarget: null
                     });
                 }
             }
-            updatePlayersTable(); // Update players table immediately
-            updateOnlineAndPlayingCounts(); // Update counts
+            updatePlayersTable();
+            updateOnlineAndPlayingCounts();
         }
 
-        /**
-         * Starts the 10-second pre-round countdown.
-         * During this time, players can place or change their bets.
-         */
         function startPreRoundCountdown() {
             initializeUIForPreRound();
-            isGameRunning = false; // Ensure game is not running during pre-round
+            isGameRunning = false;
 
-            preRoundTimer = 10; // 10 seconds countdown
+            preRoundTimer = 10;
             countdownTimerOverlay.textContent = preRoundTimer;
-            if (isLoggedIn) {
-                showMessage(`Next round starts in ${preRoundTimer} seconds. Place your bets!`, 'white');
-            } else {
-                showMessage(`Next round starts in ${preRoundTimer} seconds.`, 'white');
-            }
+            showMessage(`Next round starts in ${preRoundTimer} seconds. Place your bets!`);
 
-            // Clear any existing countdown interval to prevent duplicates
-            if (roundCountdownInterval) {
-                clearInterval(roundCountdownInterval);
-            }
+            if (roundCountdownInterval) clearInterval(roundCountdownInterval);
 
             roundCountdownInterval = setInterval(() => {
                 preRoundTimer--;
                 countdownTimerOverlay.textContent = preRoundTimer;
                 if (preRoundTimer > 0) {
-                    if (isLoggedIn) {
-                        showMessage(`Next round starts in ${preRoundTimer} seconds. Place your bets!`, 'white');
-                    } else {
-                        showMessage(`Next round starts in ${preRoundTimer} seconds.`, 'white');
-                    }
+                    showMessage(`Next round starts in ${preRoundTimer} seconds. Place your bets!`);
                 } else {
                     clearInterval(roundCountdownInterval);
                     lockBetsAndStartRound();
                 }
             }, 1000);
 
-            // If auto-bet is enabled AND user is logged in, automatically place a bet after a short delay
             if (isAutoBetEnabled && isLoggedIn) {
-                // Give a moment for the UI to update and for the user to see the countdown
-                setTimeout(() => {
-                    // Check if a bet has already been placed manually in this pre-round
-                    if (currentBetPlaced === 0) { // Only auto-bet if no manual bet already
-                        // Attempt to place an auto-bet
+                setTimeout(async () => {
+                    if (currentBetPlaced === 0) {
                         const autoBet = parseFloat(betAmountInput.value);
                         if (autoBet > 0 && autoBet <= balance) {
-                            currentBetPlaced = autoBet;
-                            balance -= currentBetPlaced;
-                            topBarBalance.textContent = `${balance.toFixed(2)} KES`; // Update top bar balance
-                            showMessage(`Auto-bet placed: ${autoBet.toFixed(2)}. Waiting for round start...`, 'var(--secondary-color)');
-                            // Generate ticket ID and add to history
-                            currentTicketId = `TKT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 100)}`;
-                            playerBetHistory.unshift({
-                                id: currentTicketId,
-                                bet: currentBetPlaced,
-                                cashout: null,
-                                crash: null,
-                                winAmount: 0,
-                                status: 'Pending'
-                            });
-                            updatePlayerHistoryDisplay();
-                            
-                            // Add user to simulatedPlayers list for the current round
-                            const userPlayerEntry = {
-                                id: currentUserId,
-                                name: currentUserNickname,
-                                bet: currentBetPlaced,
-                                cashout: null,
-                                won: null,
-                                status: 'playing',
-                                cashoutTarget: null // Will be set when round starts
-                            };
-                            simulatedPlayers.push(userPlayerEntry); // Add user to active players
-                            updatePlayersTable(); // Update players table
-                            updateOnlineAndPlayingCounts(); // Update counts
-
-                            saveGameData(); // Save data after auto-bet
-
-                            // Visually disable bet controls after auto-bet
+                            await placeBet(autoBet, parseFloat(autoCashoutInput.value));
                             betButton.disabled = true;
                             betButton.textContent = 'Bet Placed';
-                            betButton.style.backgroundColor = '#555';
                             betAmountInput.disabled = true;
                             quickBetButtons.forEach(btn => btn.disabled = true);
                         } else {
                             showMessage("Auto-bet: Insufficient balance or invalid bet. Auto-bet paused.", "var(--danger-color)");
-                            isAutoBetEnabled = false; // Pause auto-bet
-                            autoBetToggle.checked = false; // Uncheck auto-bet toggle
-                            initializeUIForPreRound(); // Reset UI for manual interaction
-                            saveGameData(); // Save data after auto-bet change
+                            isAutoBetEnabled = false;
+                            autoBetToggle.checked = false;
                         }
                     }
-                }, 1000); // Place auto-bet after 1 second of countdown
+                }, 1000);
             }
-            updateOnlineAndPlayingCounts(); // Update counts after pre-round setup
         }
 
-        /**
-         * Locks betting controls and starts the game round (jet flying).
-         */
         function lockBetsAndStartRound() {
-            countdownTimerOverlay.style.display = 'none'; // Hide countdown
-            multiplierDisplayOverlay.style.display = 'block'; // Show multiplier
-            if (isSoundInitialized) gameStartSynth.triggerAttackRelease("C4", "8n"); // Play sound
+            countdownTimerOverlay.style.display = 'none';
+            multiplierDisplayOverlay.style.display = 'block';
+            if (isSoundInitialized) gameStartSynth.triggerAttackRelease("C4", "8n");
 
-            // Disable betting controls regardless of whether a bet was placed
             betButton.disabled = true;
             betButton.textContent = 'Bets Locked';
-            betButton.style.backgroundColor = '#555';
             betAmountInput.disabled = true;
             quickBetButtons.forEach(btn => btn.disabled = true);
-            autoCashoutInput.disabled = true; // Disable auto cashout input
-            autoBetToggle.disabled = true; // Disable auto bet toggle during game
+            autoCashoutInput.disabled = true;
+            autoBetToggle.disabled = true;
 
-            // Use the provably fair multiplier
             crashMultiplier = getCrashMultiplier();
-            console.log("Calculated Crash Multiplier:", crashMultiplier); // For debugging
+            console.log("Calculated Crash Multiplier:", crashMultiplier);
 
-            if (currentBetPlaced > 0 && isLoggedIn) { // Only consider player's bet if logged in
-                betAmount = currentBetPlaced; // Confirm the bet amount for the round
-                isGameRunning = true;
-                hasCashedOut = false; // Player has not cashed out yet
-                cashoutButton.disabled = false; // Enable cashout button
-                
-                showMessage(`Round started! Jet is flying...`, 'var(--secondary-color)');
-                gameLoopInterval = setInterval(gameLoop, 100);
+            isGameRunning = true;
+            if (currentBetId) {
+                hasCashedOut = false;
+                cashoutButton.disabled = false;
             } else {
-                showMessage(`Round started! Jet is flying...`, 'var(--secondary-color)');
-                isGameRunning = true; // Still "in game" visually
-                hasCashedOut = true; // Treat as if cashed out for display purposes if no bet
-                cashoutButton.disabled = true; // No cashout if no bet
-                gameLoopInterval = setInterval(gameLoop, 100);
+                hasCashedOut = true;
+                cashoutButton.disabled = true;
             }
+            
+            showMessage(`Round started! Jet is flying...`, 'var(--secondary-color)');
+            gameLoopInterval = setInterval(gameLoop, 100);
 
-            // Simulate players cashing out at random multipliers
             simulatedPlayers.forEach(player => {
-                // Only set cashout target for players who are currently 'playing'
                 if (player.status === 'playing') { 
                     player.cashoutTarget = 1 + Math.random() * (crashMultiplier - 1.05); 
                     if (player.cashoutTarget < 1.05) player.cashoutTarget = 1.05;
                 }
             });
-            updatePlayersTable(); // Update players table
-            updateOnlineAndPlayingCounts(); // Update counts
+            updatePlayersTable();
         }
 
-        /**
-         * The main game loop, updates multiplier and checks for crash.
-         */
         function gameLoop() {
             if (!isGameRunning) return;
 
-            // Increase multiplier
-            multiplier += 0.01 + (multiplier * 0.01); // Exponential growth
+            multiplier += 0.01 + (multiplier * 0.01);
             multiplierDisplayOverlay.textContent = `${multiplier.toFixed(2)}x`;
 
-            // Update potential winnings on cashout button
-            if (currentBetPlaced > 0 && !hasCashedOut && isLoggedIn) { // Only update if logged in
+            if (currentBetId && !hasCashedOut) {
                 potentialWinDisplay.textContent = (currentBetPlaced * multiplier).toFixed(2);
             }
 
-            // Auto Cashout logic
             const autoCashoutValue = parseFloat(autoCashoutInput.value);
-            if (isAutoBetEnabled && currentBetPlaced > 0 && multiplier >= autoCashoutValue && !hasCashedOut && isLoggedIn) {
-                cashOut(); // Automatically cash out
-                // Do NOT return here. Let the game loop continue visually until crash.
+            if (isAutoBetEnabled && currentBetId && multiplier >= autoCashoutValue && !hasCashedOut) {
+                cashOut();
             }
 
-            // Simulate other players cashing out
             simulatedPlayers.forEach(player => {
                 if (player.status === 'playing' && player.cashoutTarget && multiplier >= player.cashoutTarget && player.cashout === null) {
                     player.cashout = multiplier;
@@ -2708,1365 +2409,266 @@
                     player.status = 'cashed out';
                 }
             });
-            updatePlayersTable(); // Update players table frequently
-            updateOnlineAndPlayingCounts(); // Update counts
+            updatePlayersTable();
 
-            // Dynamic Y-axis scaling for the graph
             if (multiplier > dynamicMaxMultiplierY * 0.8) { 
                 let nextMax = Y_AXIS_BREAKPOINTS.find(bp => bp > dynamicMaxMultiplierY);
-                if (nextMax) {
-                    dynamicMaxMultiplierY = nextMax;
-                } else {
-                    // If we've exceeded the highest breakpoint, just scale up by a factor
-                    dynamicMaxMultiplierY *= 2; 
-                }
+                dynamicMaxMultiplierY = nextMax || dynamicMaxMultiplierY * 2;
             }
 
-            // Add current point to curve
             gameTicks++;
-            curvePoints.push({
-                x: ticksToX(gameTicks),
-                y: multToY(multiplier)
-            });
+            curvePoints.push({ x: ticksToX(gameTicks), y: multToY(multiplier) });
+            drawGraph();
 
-            drawGraph(); // Redraw the graph with the new point
-
-            // Check for crash
             if (multiplier >= crashMultiplier) {
                 crash();
             }
         }
 
-        /**
-         * Handles the "cash out" action from the player.
-         * Only possible if game is running, player hasn't cashed out, and a bet was placed.
-         */
-        function cashOut() {
-            if (!isGameRunning || hasCashedOut || currentBetPlaced === 0 || !isLoggedIn) return; 
+        async function cashOut() {
+            if (!isGameRunning || hasCashedOut || !currentBetId) return; 
 
             hasCashedOut = true;
-            const winAmount = currentBetPlaced * multiplier; 
-            balance += winAmount;
+            await resolveBet(currentBetId, 'won', multiplier);
             
-            topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
             cashoutButton.disabled = true; 
             potentialWinDisplay.textContent = '0.00'; 
 
+            const winAmount = currentBetPlaced * multiplier;
             showMessage(`Cashed out at ${multiplier.toFixed(2)}x! You won ${winAmount.toFixed(2)}`, 'var(--success-color)');
-            if (isSoundInitialized) cashoutSynth.triggerAttackRelease("E5", "8n"); // Play sound
+            if (isSoundInitialized) cashoutSynth.triggerAttackRelease("E5", "8n");
 
-            // Update player history entry
-            const historyEntry = playerBetHistory.find(entry => entry.id === currentTicketId);
-            if (historyEntry) {
-                historyEntry.cashout = multiplier;
-                historyEntry.winAmount = winAmount;
-                historyEntry.status = 'Win';
-                updatePlayerHistoryDisplay();
-            }
-            // Update user balance in simulatedUsers array
-            const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
-            if (userIndex !== -1) {
-                simulatedUsers[userIndex].balance = balance;
-            }
-
-            // Update user's entry in simulatedPlayers for the current round
-            const userPlayerEntryIndex = simulatedPlayers.findIndex(p => p.id === currentUserId);
-            if (userPlayerEntryIndex !== -1) {
-                simulatedPlayers[userPlayerEntryIndex].cashout = multiplier;
-                simulatedPlayers[userPlayerEntryIndex].won = winAmount;
-                simulatedPlayers[userPlayerEntryIndex].status = 'cashed out';
-            }
-            updatePlayersTable(); // Update players table after user cashes out
-            updateOnlineAndPlayingCounts(); // Update counts
-
-            // Confetti burst for big wins (e.g., > 10x)
             if (multiplier >= 10) {
                 startConfetti();
             }
-
-            saveGameData(); // Save data after cash out
         }
 
-        /**
-         * Handles the jet crash event and schedules the next round.
-         */
-        function crash() {
+        async function crash() {
             clearInterval(gameLoopInterval); 
             isGameRunning = false;
             
-            // Show "Busted" text on overlay
             bustedTextOverlay.textContent = `Busted @ ${multiplier.toFixed(2)}x`;
             bustedTextOverlay.style.display = 'block';
             multiplierDisplayOverlay.style.display = 'none'; 
             potentialWinDisplay.textContent = '0.00'; 
-            if (isSoundInitialized) crashSynth.triggerAttackRelease("8n"); // Play sound
+            if (isSoundInitialized) crashSynth.triggerAttackRelease("8n");
             
-            // Update player history entry
-            const historyEntry = playerBetHistory.find(entry => entry.id === currentTicketId);
-            if (historyEntry) {
-                historyEntry.crash = multiplier; 
-                if (!hasCashedOut) { // If player did not cash out, it's a loss
-                    historyEntry.status = 'Loss';
-                    historyEntry.winAmount = 0; 
-                }
-                updatePlayerHistoryDisplay();
-            }
-
-            if (!hasCashedOut && currentBetPlaced > 0 && isLoggedIn) { // Only show loss message if logged in and actually lost
-                showMessage(`Crashed at ${multiplier.toFixed(2)}x! You lost your bet of ${currentBetPlaced.toFixed(2)}.`, 'var(--danger-color)');
+            if (currentBetId && !hasCashedOut) {
+                await resolveBet(currentBetId, 'lost', multiplier);
+                showMessage(`Crashed at ${multiplier.toFixed(2)}x! You lost your bet.`, 'var(--danger-color)');
+            } else if (currentBetId && hasCashedOut) {
+                 showMessage(`The jet flew to ${multiplier.toFixed(2)}x.`, 'var(--secondary-color)');
             } else {
-                showMessage(`The jet flew to ${multiplier.toFixed(2)}x.`, 'var(--secondary-color)');
-            }
-            
-            // Update user balance in simulatedUsers array if a bet was placed and lost
-            if (currentBetPlaced > 0 && !hasCashedOut && isLoggedIn) {
-                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
-                if (userIndex !== -1) {
-                    simulatedUsers[userIndex].balance = balance;
-                }
+                 showMessage(`The jet flew to ${multiplier.toFixed(2)}x.`, 'var(--secondary-color)');
             }
 
-            // Update user's entry in simulatedPlayers if they busted
-            const userPlayerEntryIndex = simulatedPlayers.findIndex(p => p.id === currentUserId);
-            if (userPlayerEntryIndex !== -1 && !hasCashedOut) {
-                simulatedPlayers[userPlayerEntryIndex].cashout = multiplier;
-                simulatedPlayers[userPlayerEntryIndex].won = 0;
-                simulatedPlayers[userPlayerEntryIndex].status = 'busted';
-            }
-
-            // Always add to crash history regardless of player's outcome
-            addCrashToHistory(multiplier, hasCashedOut); // Pass hasCashedOut to indicate if player won this round
-
-            saveGameData(); // Save data after crash
-
+            addCrashToHistory(multiplier);
             cashoutButton.disabled = true; 
 
-            // Update simulated players who didn't cash out
             simulatedPlayers.forEach(player => {
-                if (player.status === 'playing') { // Only update if still playing
-                    player.cashout = multiplier; 
-                    player.won = 0; 
+                if (player.status === 'playing') {
                     player.status = 'busted';
                 }
             });
-            updatePlayersTable(); // Update players table
-            updateOnlineAndPlayingCounts(); // Update counts after crash
+            updatePlayersTable();
 
-            // Schedule next pre-round countdown after a short delay
             const delay = 3000 + Math.random() * 2000; 
             showMessage(`Next round in ${Math.round(delay/1000)} seconds...`, 'white');
             setTimeout(startPreRoundCountdown, delay);
         }
 
-        /**
-         * Resets the visual elements of the game (graph, multiplier display, explosion).
-         */
         function resetAnimation() {
             multiplier = 1.00;
             gameTicks = 0;
             curvePoints = [{ x: ticksToX(0), y: multToY(1.00) }]; 
             dynamicMaxMultiplierY = 10.0; 
             drawGraph(); 
-            
             multiplierDisplayOverlay.textContent = '1.00x';
-            multiplierDisplayOverlay.style.color = 'white';
             bustedTextOverlay.style.display = 'none'; 
         }
 
-        /**
-         * Displays a message to the user in the specified target element.
-         * Defaults to the main game message display if no target is provided.
-         * @param {string} text - The message to display.
-         * @param {string} [color='white'] - The color of the message text.
-         * @param {HTMLElement} [targetElement=messageDisplay] - The DOM element to display the message in.
-         */
         function showMessage(text, color = 'white', targetElement = messageDisplay) {
-            targetElement.innerHTML = text; // Use innerHTML to allow strong tag for password reset
+            targetElement.innerHTML = text;
             targetElement.style.color = color;
         }
 
-        /**
-         * Adds a crash multiplier to the history and updates the display.
-         * @param {number} crashValue - The multiplier at which the jet crashed.
-         * @param {boolean} didWin - True if the player cashed out before the crash, false otherwise.
-         */
-        function addCrashToHistory(crashValue, didWin) {
-            crashHistory.unshift({ value: crashValue, won: didWin }); 
+        function addCrashToHistory(crashValue) {
+            crashHistory.unshift({ value: crashValue }); 
             if (crashHistory.length > MAX_HISTORY_ITEMS) {
                 crashHistory.pop(); 
             }
             updateCrashHistoryDisplay();
-            saveGameData(); // Save data after crash history update
         }
 
-        /**
-         * Updates the crash history display element (for the global history tab).
-         */
         function updateCrashHistoryDisplay() {
             crashHistoryDisplay.innerHTML = ''; 
-            // Display history from newest to oldest
             crashHistory.forEach(item => {
                 const span = document.createElement('span');
                 span.textContent = `${item.value.toFixed(2)}x`;
-                
-                // Apply color based on multiplier range
-                if (item.value >= 1.00 && item.value <= 1.99) {
-                    span.classList.add('crash-red');
-                } else if (item.value >= 2.00 && item.value <= 9.00) {
-                    span.classList.add('crash-green');
-                } else if (item.value >= 10.00) { // Multipliers 10x and above are purple
-                    span.classList.add('crash-purple');
-                }
-                
+                if (item.value < 2) span.className = 'crash-red';
+                else if (item.value < 10) span.className = 'crash-green';
+                else span.className = 'crash-purple';
                 crashHistoryDisplay.appendChild(span);
             });
         }
 
-        /**
-         * Updates the player's individual bet history display (for the 'My Bets' tab).
-         */
-        function updatePlayerHistoryDisplay() {
-            // Clear all but the header row
-            while (playerHistoryDisplayTab.children.length > 1) {
-                playerHistoryDisplayTab.removeChild(playerHistoryDisplayTab.lastChild);
-            }
-
-            // Add history items in reverse order (newest first)
-            for (let i = 0; i < playerBetHistory.length; i++) {
-                const item = playerBetHistory[i];
-                const div = document.createElement('div');
-                div.classList.add('history-item');
-
-                const ticketIdSpan = document.createElement('span');
-                ticketIdSpan.classList.add('ticket-id');
-                ticketIdSpan.textContent = item.id;
-
-                const betAmountSpan = document.createElement('span');
-                betAmountSpan.classList.add('bet-amount');
-                betAmountSpan.textContent = item.bet.toFixed(2);
-
-                const multiplierInfoSpan = document.createElement('span');
-                multiplierInfoSpan.classList.add('multiplier-info');
-                if (item.status === 'Win') {
-                    multiplierInfoSpan.textContent = `${item.cashout.toFixed(2)}x (Cashed Out)`;
-                    multiplierInfoSpan.style.color = 'var(--success-color)';
-                } else if (item.status === 'Loss') {
-                    multiplierInfoSpan.textContent = `${item.crash.toFixed(2)}x (Busted)`;
-                    multiplierInfoSpan.style.color = 'var(--danger-color)';
-                } else {
-                    multiplierInfoSpan.textContent = 'Pending...';
-                    multiplierInfoSpan.style.color = 'var(--accent-color)';
-                }
-
-                const statusSpan = document.createElement('span');
-                statusSpan.classList.add('status');
-                statusSpan.textContent = item.status;
-                if (item.status === 'Win') {
-                    statusSpan.classList.add('status-win');
-                }
-                if (item.status === 'Loss') {
-                    statusSpan.classList.add('status-loss');
-                }
-
-                div.appendChild(ticketIdSpan);
-                div.appendChild(betAmountSpan);
-                div.appendChild(multiplierInfoSpan);
-                div.appendChild(statusSpan);
-
-                playerHistoryDisplayTab.insertBefore(div, playerHistoryDisplayTab.children[1]);
-            }
-            playerHistoryDisplayTab.scrollTop = 0;
-        }
-
-        /**
-         * Updates the players table in the "Players" tab.
-         */
         function updatePlayersTable() {
             playersTableBody.innerHTML = ''; 
-
             simulatedPlayers.forEach(player => {
                 const row = document.createElement('tr');
                 if (isLoggedIn && player.id === currentUserId) {
-                    row.classList.add('highlighted-player'); // Highlight the current user's row
+                    row.classList.add('highlighted-player');
                 }
-
-                const playerCell = document.createElement('td');
-                const avatarSpan = document.createElement('span');
-                avatarSpan.classList.add('player-avatar');
-                avatarSpan.textContent = player.name.substring(0, 2).toUpperCase(); 
-                playerCell.appendChild(avatarSpan);
-                playerCell.append(player.name);
-
-                const amountCell = document.createElement('td');
-                amountCell.classList.add('amount-cell');
-                amountCell.textContent = player.bet.toFixed(2);
-
-                const cashoutCell = document.createElement('td');
-                cashoutCell.classList.add('cashout-cell');
-                if (player.cashout) {
-                    cashoutCell.textContent = `${player.cashout.toFixed(2)}x`;
-                    if (player.status === 'cashed out') {
-                        cashoutCell.classList.add('cashed-out');
-                    } else if (player.status === 'busted') {
-                        cashoutCell.classList.add('busted');
-                    }
-                } else {
-                    cashoutCell.textContent = '-';
-                }
-
-                const wonCell = document.createElement('td');
-                wonCell.classList.add('won-cell');
-                if (player.won !== null) {
-                    wonCell.textContent = player.won.toFixed(2);
-                } else {
-                    wonCell.textContent = '-';
-                }
-
-                row.appendChild(playerCell);
-                row.appendChild(amountCell);
-                row.appendChild(cashoutCell);
-                row.appendChild(wonCell);
+                row.innerHTML = `
+                    <td><span class="player-avatar">${player.name.substring(0, 2).toUpperCase()}</span> ${player.name}</td>
+                    <td class="amount-cell">${player.bet.toFixed(2)}</td>
+                    <td class="cashout-cell ${player.status === 'cashed out' ? 'cashed-out' : player.status === 'busted' ? 'busted' : ''}">${player.cashout ? player.cashout.toFixed(2) + 'x' : '-'}</td>
+                    <td class="won-cell">${player.won ? player.won.toFixed(2) : '-'}</td>
+                `;
                 playersTableBody.appendChild(row);
             });
-            updateOnlineAndPlayingCounts(); // Update counts after table update
         }
 
-        /**
-         * Updates the leaderboard display.
-         */
         function updateLeaderboardDisplay() {
-            // Clear existing leaderboards
-            leaderboardMultiplierBody.innerHTML = '';
-            leaderboardWinningsBody.innerHTML = '';
-
-            // Combine all users (simulated and current) for leaderboard
-            const allUsersForLeaderboard = [...simulatedUsers];
-            if (isLoggedIn && !allUsersForLeaderboard.some(u => u.mobile === currentUserId)) {
-                // Add current user if not already in simulatedUsers (e.g., newly created)
-                allUsersForLeaderboard.push({
-                    mobile: currentUserId,
-                    nickname: currentUserNickname,
-                    balance: balance,
-                    playerBetHistory: playerBetHistory // Include their history for stats
-                });
-            }
-
-            // Calculate highest multiplier and total winnings for each user
-            const userStats = allUsersForLeaderboard.map(user => {
-                let highestMultiplier = 1.00;
-                let totalWinnings = 0;
-
-                // Use playerBetHistory for the current user, or generate some for simulated users
-                const historyToProcess = user.playerBetHistory || generateSimulatedHistory(user.nickname);
-
-                historyToProcess.forEach(bet => {
-                    if (bet.status === 'Win' && bet.cashout > highestMultiplier) {
-                        highestMultiplier = bet.cashout;
-                    }
-                    if (bet.winAmount) {
-                        totalWinnings += bet.winAmount;
-                    }
-                });
-
-                return {
-                    name: user.nickname,
-                    highestMultiplier: highestMultiplier,
-                    totalWinnings: totalWinnings
-                };
-            });
-
-            // Sort for Top Crashers (Highest Multiplier)
-            const topCrashers = [...userStats].sort((a, b) => b.highestMultiplier - a.highestMultiplier).slice(0, 10);
-            topCrashers.forEach((player, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="rank-cell">${index + 1}</td>
-                    <td>${player.name}</td>
-                    <td class="multiplier-cell">${player.highestMultiplier.toFixed(2)}x</td>
-                `;
-                leaderboardMultiplierBody.appendChild(row);
-            });
-
-            // Sort for Top Earners (Total Winnings)
-            const topEarners = [...userStats].sort((a, b) => b.totalWinnings - a.totalWinnings).slice(0, 10);
-            topEarners.forEach((player, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="rank-cell">${index + 1}</td>
-                    <td>${player.name}</td>
-                    <td class="winnings-cell">${player.totalWinnings.toFixed(2)}</td>
-                `;
-                leaderboardWinningsBody.appendChild(row);
-            });
+            // This can be further enhanced with Supabase data
         }
 
-        // Helper to generate simulated history for leaderboard if not present
-        function generateSimulatedHistory(nickname) {
-            const history = [];
-            const numEntries = Math.floor(Math.random() * 20) + 5; // 5 to 24 entries
-            for (let i = 0; i < numEntries; i++) {
-                const bet = Math.floor(Math.random() * 100) + 10; // Bet between 10 and 109
-                const outcome = Math.random();
-                let status, cashout, crash, winAmount;
-
-                if (outcome < 0.6) { // 60% chance of loss
-                    status = 'Loss';
-                    crash = 1 + Math.random() * 10; // Crash between 1.00x and 11.00x
-                    cashout = null;
-                    winAmount = 0;
-                } else { // 40% chance of win
-                    status = 'Win';
-                    cashout = 1.5 + Math.random() * 20; // Cashout between 1.5x and 21.5x
-                    crash = null; // No crash for a win
-                    winAmount = bet * cashout;
-                }
-                history.push({
-                    id: `SIM-${nickname.substring(0,3).toUpperCase()}-${i}`,
-                    bet: bet,
-                    cashout: cashout,
-                    crash: crash,
-                    winAmount: winAmount,
-                    status: status
-                });
-            }
-            return history;
-        }
-
-        /**
-         * Updates the online users and playing users counts.
-         */
-        function updateOnlineAndPlayingCounts() {
-            const currentOnline = baseOnlineUsers + (isLoggedIn ? 1 : 0);
-            onlineUsersCount.textContent = currentOnline;
-            const currentPlaying = simulatedPlayers.filter(p => p.status === 'playing').length;
-            playingUsersCount.textContent = currentPlaying;
-        }
-
-        /**
-         * Adds a new message to the chat display.
-         * @param {string} username - The sender's username.
-         * @param {string} message - The message content.
-         */
         function addChatMessage(username, message) {
-            const now = new Date();
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const time = `${now.getHours().toString().padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; 
-
+            const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             const p = document.createElement('p');
             p.classList.add('chat-message');
             p.innerHTML = `<span>${time}</span> ${username}: ${message}`;
             chatMessagesDiv.appendChild(p);
-            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
         }
 
-        /**
-         * Shows a modal with animation and disables body scrolling.
-         * @param {HTMLElement} modalElement - The modal DOM element.
-         */
         function showModal(modalElement) {
             modalElement.style.display = 'flex';
-            // Trigger reflow to ensure transition plays
-            modalElement.offsetWidth; 
-            modalElement.classList.add('show');
+            setTimeout(() => modalElement.classList.add('show'), 10);
             document.body.classList.add('modal-open');
         }
 
-        /**
-         * Hides a modal with animation and re-enables body scrolling.
-         * @param {HTMLElement} modalElement - The modal DOM element.
-         */
         function hideModal(modalElement) {
             modalElement.classList.remove('show');
-            modalElement.addEventListener('transitionend', function handler() {
+            setTimeout(() => {
                 modalElement.style.display = 'none';
                 document.body.classList.remove('modal-open');
-                modalElement.removeEventListener('transitionend', handler);
-            });
+            }, 300);
         }
 
-        /**
-         * Shows the loading spinner.
-         */
-        function showSpinner() {
-            loadingOverlay.style.display = 'flex';
-        }
-
-        /**
-         * Hides the loading spinner.
-         */
-        function hideSpinner() {
-            loadingOverlay.style.display = 'none';
-        }
-
-        // Confetti effect
-        let confetti = [];
-        const NUM_CONFETTI = 50;
-        const COLORS = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'];
-
-        function createConfetti() {
-            confetti = [];
-            for (let i = 0; i < NUM_CONFETTI; i++) {
-                confetti.push({
-                    x: confettiCanvas.width / 2,
-                    y: confettiCanvas.height / 2,
-                    radius: Math.random() * 5 + 2,
-                    color: COLORS[Math.floor(Math.random() * COLORS.length)],
-                    velocity: {
-                        x: (Math.random() - 0.5) * 10,
-                        y: (Math.random() - 0.5) * 10 - 5 // Upwards bias
-                    },
-                    alpha: 1
-                });
-            }
-        }
-
-        function drawConfetti() {
-            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-            confetti.forEach((c, index) => {
-                c.x += c.velocity.x;
-                c.y += c.velocity.y;
-                c.velocity.y += 0.2; // Gravity
-                c.alpha -= 0.01; // Fade out
-
-                if (c.alpha <= 0) {
-                    confetti.splice(index, 1); // Remove faded confetti
-                    return;
-                }
-
-                confettiCtx.save();
-                confettiCtx.globalAlpha = c.alpha;
-                confettiCtx.beginPath();
-                confettiCtx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
-                confettiCtx.fillStyle = c.color;
-                confettiCtx.fill();
-                confettiCtx.restore();
-            });
-
-            if (confetti.length > 0) {
-                requestAnimationFrame(drawConfetti);
-            }
-        }
-
-        function startConfetti() {
-            createConfetti();
-            drawConfetti();
-        }
+        function showSpinner() { loadingOverlay.style.display = 'flex'; }
+        function hideSpinner() { loadingOverlay.style.display = 'none'; }
 
         // --- Event Listeners ---
-        cashoutButton.addEventListener('click', cashOut);
-        
-        // Manual Bet Button Listener
-        betButton.addEventListener('click', () => {
-            if (!isLoggedIn) {
-                showMessage("Please login to place a bet.", "var(--danger-color)");
-                return;
-            }
-            if (isGameRunning) {
-                showMessage("Cannot place bet while round is running.", "var(--danger-color)");
-                return;
-            }
-            if (preRoundTimer === 0) {
-                showMessage("Bets are locked. Waiting for next round.", "var(--danger-color)");
-                return;
-            }
+        betButton.addEventListener('click', async () => {
+            const betAmount = parseFloat(betAmountInput.value);
+            const autoCashout = parseFloat(autoCashoutInput.value);
 
-            const potentialBet = parseFloat(betAmountInput.value);
-            if (isNaN(potentialBet) || potentialBet <= 0) {
-                showMessage("Invalid bet amount. Please enter a valid number.", "var(--danger-color)");
-                betAmountInput.classList.add('input-error');
-                return;
-            }
-            betAmountInput.classList.remove('input-error'); // Clear error if valid
-            
-            if (potentialBet > balance) {
-                showMessage("Insufficient balance.", "var(--danger-color)");
-                betAmountInput.classList.add('input-error');
-                return;
-            }
-            betAmountInput.classList.remove('input-error'); // Clear error if valid
+            if (isNaN(betAmount) || betAmount <= 0) return showMessage("Invalid bet", "var(--danger-color)");
+            if (isNaN(autoCashout) || autoCashout < 1.01) return showMessage("Invalid cashout", "var(--danger-color)");
+            if (betAmount > balance) return showMessage("Insufficient balance", "var(--danger-color)");
 
-            if (currentBetPlaced > 0) {
-                balance += currentBetPlaced; // Refund previous bet
-                topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
-                showMessage(`Bet changed from ${currentBetPlaced.toFixed(2)} to ${potentialBet.toFixed(2)}.`, 'var(--secondary-color)');
-
-                const existingEntry = playerBetHistory.find(entry => entry.id === currentTicketId);
-                if (existingEntry) {
-                    existingEntry.bet = potentialBet;
-                    updatePlayerHistoryDisplay();
-                }
-            } else {
-                showMessage(`Bet placed: ${potentialBet.toFixed(2)}.`, 'var(--success-color)');
-                currentTicketId = `TKT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 100)}`;
-                playerBetHistory.unshift({
-                    id: currentTicketId,
-                    bet: potentialBet,
-                    cashout: null,
-                    crash: null,
-                    winAmount: 0,
-                    status: 'Pending'
-                });
-                updatePlayerHistoryDisplay();
-            }
-
-            currentBetPlaced = potentialBet; 
-            balance -= currentBetPlaced; 
-            topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
-            potentialWinDisplay.textContent = '0.00'; 
-
-            betButton.disabled = true;
-            betButton.textContent = 'Bet Placed';
-            betButton.style.backgroundColor = '#555';
-            betAmountInput.disabled = true;
-            quickBetButtons.forEach(btn => btn.disabled = true);
-            
-            // Add/Update user in simulatedPlayers for the current round
-            const userPlayerEntry = {
-                id: currentUserId, // Use currentUserId for the unique identifier
-                name: currentUserNickname,
-                bet: currentBetPlaced,
-                cashout: null,
-                won: null,
-                status: 'playing' // User is now actively playing for this round
-            };
-            const existingPlayerIndex = simulatedPlayers.findIndex(p => p.id === currentUserId);
-            if (existingPlayerIndex !== -1) {
-                simulatedPlayers[existingPlayerIndex] = userPlayerEntry; // Update existing entry
-            } else {
-                simulatedPlayers.push(userPlayerEntry); // Add new entry
-            }
-            updatePlayersTable(); // Update the table immediately
-            updateOnlineAndPlayingCounts(); // Update counts
-
-            // Update user balance in simulatedUsers array
-            const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
-            if (userIndex !== -1) {
-                simulatedUsers[userIndex].balance = balance;
-            }
-            saveGameData(); // Save data after manual bet
+            currentBetPlaced = betAmount;
+            await placeBet(betAmount, autoCashout);
         });
 
-        // Auto Bet Toggle Listener
-        autoBetToggle.addEventListener('change', () => { 
-            isAutoBetEnabled = autoBetToggle.checked; 
-            if (isAutoBetEnabled && isLoggedIn) { // Check isLoggedIn
-                if (!isGameRunning && preRoundTimer > 0) {
-                    setTimeout(() => { 
-                        if (currentBetPlaced === 0) { 
-                            const autoBet = parseFloat(betAmountInput.value);
-                            if (autoBet > 0 && autoBet <= balance) {
-                                currentBetPlaced = autoBet;
-                                balance -= currentBetPlaced;
-                                topBarBalance.textContent = `${balance.toFixed(2)} KES`; 
-                                showMessage(`Auto-bet placed: ${autoBet.toFixed(2)}. Waiting for round start...`, 'var(--secondary-color)');
-                                currentTicketId = `TKT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 100)}`;
-                                playerBetHistory.unshift({
-                                    id: currentTicketId,
-                                    bet: autoBet, // Use autoBet here
-                                    cashout: null,
-                                    crash: null,
-                                    winAmount: 0,
-                                    status: 'Pending'
-                                });
-                                updatePlayerHistoryDisplay();
-
-                                betButton.disabled = true;
-                                betButton.textContent = 'Bet Placed';
-                                betButton.style.backgroundColor = '#555';
-                                betAmountInput.disabled = true;
-                                quickBetButtons.forEach(btn => btn.disabled = true);
-
-                                // Add user to simulatedPlayers list for the current round
-                                const userPlayerEntry = {
-                                    id: currentUserId, // Use currentUserId for the unique identifier
-                                    name: currentUserNickname,
-                                    bet: currentBetPlaced,
-                                    cashout: null,
-                                    won: null,
-                                    status: 'playing',
-                                    cashoutTarget: null // Will be set when round starts
-                                };
-                                // For auto-bet, we assume it's a new bet for the round, so just push
-                                simulatedPlayers.push(userPlayerEntry); 
-                                updatePlayersTable(); // Update players table
-                                updateOnlineAndPlayingCounts(); // Update counts
-
-                                // Update user balance in simulatedUsers array
-                                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
-                                if (userIndex !== -1) {
-                                    simulatedUsers[userIndex].balance = balance;
-                                }
-                            } else {
-                                showMessage("Auto-bet: Insufficient balance or invalid bet. Auto-bet paused.", "var(--danger-color)");
-                                isAutoBetEnabled = false; 
-                                autoBetToggle.checked = false; 
-                                initializeUIForPreRound(); 
-                            }
-                        }
-                    }, 100);
-                }
-            } else {
-                if (!isGameRunning) {
-                    initializeUIForPreRound(); 
-                    if (isLoggedIn) {
-                        showMessage('Auto-bet disabled. Place your bet to start!', 'var(--secondary-color)');
-                    } else {
-                        showMessage('Login to place your bet!', 'var(--accent-color)');
-                    }
-                }
-                if (roundCountdownInterval) {
-                    clearInterval(roundCountdownInterval);
-                    roundCountdownInterval = null;
-                }
-            }
-            saveGameData(); // Save data after auto-bet toggle change
-        });
-
-        // Quick Bet Buttons Listener
-        quickBetButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                if (!isGameRunning && !isAutoBetEnabled && preRoundTimer > 0 && isLoggedIn) { // Check isLoggedIn
-                    const value = parseInt(button.dataset.bet);
-                    betAmountInput.value = value;
-                    saveGameData(); // Save data after quick bet button changes input
-                } else if (!isLoggedIn) {
-                    showMessage("Please login to change bet amount.", "var(--danger-color)");
-                }
-            });
-        });
-
-        // Bet Amount Input Listener (for manual changes)
-        betAmountInput.addEventListener('input', () => { // Changed to 'input' for real-time validation
-            const currentVal = parseFloat(betAmountInput.value);
-            if (isNaN(currentVal) || currentVal <= 0) {
-                betAmountInput.classList.add('input-error');
-            } else if (currentVal > balance) {
-                betAmountInput.classList.add('input-error');
-            } else {
-                betAmountInput.classList.remove('input-error');
-            }
-
-            if (isLoggedIn) { // Only save if logged in
-                saveGameData(); // Save data when bet amount input changes
-            }
-        });
-
-        // Auto Cashout Input Listener
-        autoCashoutInput.addEventListener('change', () => {
-            if (isLoggedIn) { // Only save if logged in
-                saveGameData(); // Save data when auto cashout input changes
-            }
-        });
-
-        // Top Bar Button Placeholders
-        promoClickButton.addEventListener('click', () => showMessage('Promo link clicked!', 'var(--accent-color)'));
-
-        // Chat Send Button Listener
-        chatSendButton.addEventListener('click', () => {
-            const message = chatInputField.value.trim();
-            if (message) {
-                addChatMessage(currentUserNickname || "Guest", message); // Use nickname if logged in, else "Guest"
-                chatInputField.value = ''; 
-            }
-        });
-
-        // Allow sending chat message with Enter key
-        chatInputField.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                chatSendButton.click();
-            }
-        });
-
-        // Tab Switching Logic
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetTab = button.dataset.tab;
-
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabPanes.forEach(pane => pane.classList.remove('active'));
-
-                button.classList.add('active');
-                document.getElementById(`${targetTab}-tab-pane`).classList.add('active');
-
-                if (targetTab === 'my-bets') {
-                    updatePlayerHistoryDisplay(); 
-                } else if (targetTab === 'leaderboard') {
-                    updateLeaderboardDisplay();
-                }
-            });
-        });
-
-        // --- Modal Logic ---
-        // Universal close button listener
-        allCloseModalButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const modalIdToClose = event.target.dataset.modalClose;
-                const modalElement = document.getElementById(modalIdToClose);
-                hideModal(modalElement);
-                // Clear messages and input errors when closing modals
-                if (modalIdToClose === 'loginModal') {
-                    loginMessageDisplay.textContent = '';
-                    loginMobileInput.classList.remove('input-error');
-                    loginPasswordInput.classList.remove('input-error');
-                } else if (modalIdToClose === 'signupModal') {
-                    signupMessageDisplay.textContent = '';
-                    signupMobileInput.classList.remove('input-error');
-                    signupNicknameInput.classList.remove('input-error');
-                    signupPasswordInput.classList.remove('input-error');
-                } else if (modalIdToClose === 'passwordResetModal') { 
-                    passwordResetMessageDisplay.textContent = '';
-                    resetMobileInput.classList.remove('input-error');
-                } else if (modalIdToClose === 'changePasswordModal') {
-                    changePasswordMessageDisplay.textContent = '';
-                    currentPasswordInput.value = '';
-                    newPasswordInput.value = '';
-                    confirmNewPasswordInput.value = '';
-                    currentPasswordInput.classList.remove('input-error');
-                    newPasswordInput.classList.remove('input-error');
-                    confirmNewPasswordInput.classList.remove('input-error');
-                }
-                console.log(`Closing modal: ${modalIdToClose}`);
-            });
-        });
-
-        // Close modal if user clicks outside of it, or close dropdown if clicked outside
-        window.addEventListener('click', (event) => {
-            if (event.target == depositWithdrawModal) {
-                hideModal(depositWithdrawModal);
-                console.log("Closing depositWithdrawModal by outside click.");
-            }
-            if (event.target == loginModal) {
-                hideModal(loginModal);
-                console.log("Closing loginModal by outside click.");
-            }
-            if (event.target == signupModal) {
-                hideModal(signupModal);
-                console.log("Closing signupModal by outside click.");
-            }
-            if (event.target == passwordResetModal) { 
-                hideModal(passwordResetModal);
-                console.log("Closing passwordResetModal by outside click.");
-            }
-            if (event.target == changePasswordModal) {
-                hideModal(changePasswordModal);
-                console.log("Closing changePasswordModal by outside click.");
-            }
-            if (event.target == howToPlayModal) {
-                hideModal(howToPlayModal);
-                console.log("Closing howToPlayModal by outside click.");
-            }
-
-            // Close account dropdown if click is outside of it and the auth button
-            if (!authButton.contains(event.target) && !accountDropdown.contains(event.target)) {
-                accountDropdown.classList.remove('show');
-            }
-        });
-
-        modalTabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetTab = button.dataset.modalTab;
-                console.log(`Modal tab clicked: ${targetTab}`);
-
-                modalTabButtons.forEach(btn => btn.classList.remove('active'));
-                modalTabPanes.forEach(pane => pane.classList.remove('active'));
-
-                button.classList.add('active');
-                document.getElementById(`${targetTab}-tab-pane`).classList.add('active');
-
-                // Special logic for withdraw tab to update "To Disburse"
-                if (targetTab === 'withdraw') {
-                    updateToDisburse();
-                }
-            });
-        });
-
-        depositAmountInput.addEventListener('input', () => {
-            const amount = parseFloat(depositAmountInput.value);
-            if (isNaN(amount) || amount < 10) {
-                depositAmountInput.classList.add('input-error');
-            } else {
-                depositAmountInput.classList.remove('input-error');
-            }
-        });
-
-        withdrawAmountInput.addEventListener('input', () => {
-            updateToDisburse();
-            const amount = parseFloat(withdrawAmountInput.value);
-            if (isNaN(amount) || amount < 100 || amount > balance) {
-                withdrawAmountInput.classList.add('input-error');
-            } else {
-                withdrawAmountInput.classList.remove('input-error');
-            }
-        });
-
-        function updateToDisburse() {
-            const withdrawAmount = parseFloat(withdrawAmountInput.value);
-            const transferFee = 5; // Fixed fee
-            let toDisburse = withdrawAmount - transferFee;
-            if (toDisburse < 0) toDisburse = 0; // Prevent negative display
-            toDisburseSpan.textContent = toDisburse.toFixed(2);
-        }
-
-        topUpNowButton.addEventListener('click', () => {
-            const amount = parseFloat(depositAmountInput.value);
-            if (isNaN(amount) || amount <= 0) {
-                showMessage("Please enter a valid deposit amount.", "var(--danger-color)");
-                depositAmountInput.classList.add('input-error');
-                return;
-            }
-            if (amount < 10) {
-                showMessage("Minimum deposit amount is 10/-", "var(--danger-color)");
-                depositAmountInput.classList.add('input-error');
-                return;
-            }
-            depositAmountInput.classList.remove('input-error');
-            showSpinner();
-            setTimeout(() => { // Simulate network delay
-                balance += amount;
-                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
-                if (userIndex !== -1) {
-                    simulatedUsers[userIndex].balance = balance;
-                }
-                saveGameData();
-                updateModalBalance();
-                topBarBalance.textContent = `${balance.toFixed(2)} KES`;
-                showMessage(`Successfully deposited ${amount.toFixed(2)} KES!`, "var(--success-color)");
-                hideSpinner();
-            }, 1000);
-        });
-
-        withdrawNowButton.addEventListener('click', () => {
-            const amount = parseFloat(withdrawAmountInput.value);
-            if (isNaN(amount) || amount <= 0) {
-                showMessage("Please enter a valid withdrawal amount.", "var(--danger-color)");
-                withdrawAmountInput.classList.add('input-error');
-                return;
-            }
-            if (amount < 100) {
-                showMessage("Minimum withdrawal amount is 100/-", "var(--danger-color)");
-                withdrawAmountInput.classList.add('input-error');
-                return;
-            }
-            if (amount > balance) {
-                showMessage("Insufficient withdrawable balance.", "var(--danger-color)");
-                withdrawAmountInput.classList.add('input-error');
-                return;
-            }
-            withdrawAmountInput.classList.remove('input-error');
-            showSpinner();
-            setTimeout(() => { // Simulate network delay
-                // Simulate 20% WHT
-                const taxRate = 0.20;
-                const taxableAmount = amount;
-                const taxDeduction = taxableAmount * taxRate;
-                const finalWithdrawal = amount - taxDeduction;
-
-                balance -= amount;
-                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
-                if (userIndex !== -1) {
-                    simulatedUsers[userIndex].balance = balance;
-                }
-                saveGameData();
-                updateModalBalance();
-                topBarBalance.textContent = `${balance.toFixed(2)} KES`;
-                showMessage(`Successfully withdrew ${finalWithdrawal.toFixed(2)} KES (Tax: ${taxDeduction.toFixed(2)} KES).`, "var(--success-color)");
-                hideSpinner();
-            }, 1000);
-        });
-
-        verifyMpesaButton.addEventListener('click', () => {
-            const mpesaCode = mpesaCodeInput.value.trim();
-            if (mpesaCode.length === 0) {
-                showMessage("Please enter an M-PESA code.", "var(--danger-color)");
-                mpesaCodeInput.classList.add('input-error');
-                return;
-            }
-            mpesaCodeInput.classList.remove('input-error');
-            showSpinner();
-            setTimeout(() => { // Simulate verification
-                showMessage(`Verifying M-PESA code: ${mpesaCode}... (This is a simulation)`, "var(--secondary-color)");
-                mpesaCodeInput.value = ''; // Clear input
-                hideSpinner();
-            }, 1000);
-        });
-
-        function updateModalBalance() {
-            modalBalance.textContent = balance.toFixed(2);
-            modalWithdrawable.textContent = balance.toFixed(2); 
-            modalBonus.textContent = (balance * 0.1).toFixed(2); // Example: 10% of balance as bonus
-        }
-
-        // --- Login/Signup Modals Logic ---
-        function isValidMobile(mobile) {
-            return /^07\d{8}$/.test(mobile);
-        }
-
-        function isValidPassword(password) {
-            return password.length >= 6 && password.length <= 8; // Min 6, Max 8 characters
-        }
-
-        showSignupLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            hideModal(loginModal);
-            showModal(signupModal);
-            signupMobileInput.value = '';
-            signupNicknameInput.value = '';
-            signupPasswordInput.value = '';
-            signupMessageDisplay.textContent = '';
-            signupMobileInput.classList.remove('input-error');
-            signupNicknameInput.classList.remove('input-error');
-            signupPasswordInput.classList.remove('input-error');
-        });
-
-        showLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            hideModal(signupModal);
-            showModal(loginModal);
-            loginMobileInput.value = '';
-            loginPasswordInput.value = '';
-            loginMessageDisplay.textContent = '';
-            loginMobileInput.classList.remove('input-error');
-            loginPasswordInput.classList.remove('input-error');
-        });
-
-        createAccountButton.addEventListener('click', () => {
-            const mobile = signupMobileInput.value.trim();
-            const nickname = signupNicknameInput.value.trim();
-            const password = signupPasswordInput.value.trim();
-
-            let hasError = false;
-            if (!mobile || !isValidMobile(mobile)) {
-                showMessage("Invalid mobile format (e.g., 07XXXXXXXX).", "var(--danger-color)", signupMessageDisplay);
-                signupMobileInput.classList.add('input-error');
-                hasError = true;
-            } else {
-                signupMobileInput.classList.remove('input-error');
-            }
-            if (!nickname) {
-                showMessage("Nickname is required.", "var(--danger-color)", signupMessageDisplay);
-                signupNicknameInput.classList.add('input-error');
-                hasError = true;
-            } else {
-                signupNicknameInput.classList.remove('input-error');
-            }
-            if (!password || !isValidPassword(password)) {
-                showMessage("Password must be 6-8 characters long.", "var(--danger-color)", signupMessageDisplay);
-                signupPasswordInput.classList.add('input-error');
-                hasError = true;
-            } else {
-                signupPasswordInput.classList.remove('input-error');
-            }
-            if (hasError) return;
-
-            if (simulatedUsers.some(user => user.mobile === mobile)) {
-                showMessage("Account with this mobile number already exists.", "var(--danger-color)", signupMessageDisplay);
-                signupMobileInput.classList.add('input-error');
-                return;
-            }
-
-            showSpinner();
-            setTimeout(() => { // Simulate network delay
-                simulatedUsers.push({ mobile, nickname, password, balance: 1000, playerBetHistory: [] }); // Initial balance and empty history for new users
-                saveGameData();
-                showMessage("Account successfully created! Please login.", "var(--success-color)", signupMessageDisplay);
-                hideSpinner();
-                setTimeout(() => {
-                    hideModal(signupModal);
-                    showModal(loginModal);
-                    loginMobileInput.value = mobile;
-                    loginPasswordInput.value = '';
-                    loginMessageDisplay.textContent = '';
-                }, 1500);
-            }, 1000);
-        });
-
-        loginButton.addEventListener('click', () => {
-            const mobile = loginMobileInput.value.trim();
+        loginButton.addEventListener('click', async () => {
+            const phone = loginMobileInput.value.trim();
             const password = loginPasswordInput.value.trim();
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: phone + '@princealexjet.com',
+                password: password
+            });
 
-            let hasError = false;
-            if (!mobile || !isValidMobile(mobile)) {
-                showMessage("Invalid mobile format (e.g., 07XXXXXXXX).", "var(--danger-color)", loginMessageDisplay);
-                loginMobileInput.classList.add('input-error');
-                hasError = true;
+            if (error) {
+                loginMessageDisplay.textContent = error.message;
             } else {
-                loginMobileInput.classList.remove('input-error');
+                loginMessageDisplay.textContent = 'Login successful!';
+                hideModal(loginModal);
             }
-            if (!password) {
-                showMessage("Password is required.", "var(--danger-color)", loginMessageDisplay);
-                loginPasswordInput.classList.add('input-error');
-                hasError = true;
+        });
+
+        createAccountButton.addEventListener('click', async () => {
+            const phone = signupMobileInput.value.trim();
+            const password = signupPasswordInput.value.trim();
+            const nickname = signupNicknameInput.value.trim();
+
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: phone + '@princealexjet.com',
+                password: password,
+                options: { data: { nickname: nickname } }
+            });
+
+            if (error) {
+                signupMessageDisplay.textContent = error.message;
+            } else if (data.user) {
+                await supabaseClient.from('wallets').insert({ user_id: data.user.id, balance: 0, bonus: 0, withdrawable: 0 });
+                await supabaseClient.from('profiles').insert({ id: data.user.id, phone: phone, nickname: nickname });
+                signupMessageDisplay.textContent = 'Account created successfully!';
+                hideModal(signupModal);
+                showModal(loginModal);
+            }
+        });
+
+        topUpNowButton.addEventListener('click', async () => {
+            const amount = parseFloat(depositAmountInput.value);
+            if (amount < 10) return showMessage("Minimum deposit is 10", "var(--danger-color)", messageDisplay);
+            await updateWalletAmount(amount);
+            await loadUserData();
+        });
+
+        withdrawNowButton.addEventListener('click', async () => {
+            const amount = parseFloat(withdrawAmountInput.value);
+            const fee = 5;
+            const total = amount + fee;
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data: wallet } = await supabaseClient.from('wallets').select('*').eq('user_id', user.id).single();
+
+            if ((wallet?.withdrawable || 0) >= total) {
+                await updateWalletAmount(-total);
+                await supabaseClient.from('transactions').insert({ user_id: user.id, type: 'withdraw', amount: amount, status: 'pending' });
+                await loadUserData();
+                showMessage("Withdrawal requested!", "var(--success-color)");
             } else {
-                loginPasswordInput.classList.remove('input-error');
-            }
-            if (hasError) return;
-
-            const user = simulatedUsers.find(u => u.mobile === mobile && u.password === password);
-
-            if (user) {
-                showSpinner();
-                setTimeout(() => { // Simulate network delay
-                    isLoggedIn = true;
-                    currentUserId = user.mobile;
-                    currentUserNickname = user.nickname;
-                    balance = user.balance;
-                    playerBetHistory.length = 0;
-                    if (user.playerBetHistory) {
-                        user.playerBetHistory.forEach(item => playerBetHistory.push(item));
-                    }
-                    saveGameData();
-                    showMessage(`Welcome, ${currentUserNickname}!`, "var(--success-color)", loginMessageDisplay);
-                    hideSpinner();
-                    setTimeout(() => {
-                        hideModal(loginModal);
-                        updateAuthUI();
-                        startPreRoundCountdown();
-                    }, 1500);
-                }, 1000);
-            } else {
-                showMessage("Invalid mobile number or password.", "var(--danger-color)", loginMessageDisplay);
-                loginMobileInput.classList.add('input-error');
-                loginPasswordInput.classList.add('input-error');
+                showMessage("Insufficient withdrawable balance", "var(--danger-color)");
             }
         });
+        
+        document.querySelector('[data-tab="my-bets"]').addEventListener('click', loadMyBetHistory);
+        dropdownLogout.addEventListener('click', async () => { await supabaseClient.auth.signOut(); });
 
-        // Forgot Password Link Listener
-        showPasswordResetLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            hideModal(loginModal);
-            showModal(passwordResetModal);
-            resetMobileInput.value = '';
-            passwordResetMessageDisplay.textContent = '';
-            resetMobileInput.classList.remove('input-error');
-        });
-
-        // Back to Login Link Listener
-        backToLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            hideModal(passwordResetModal);
-            showModal(loginModal);
-            loginMobileInput.value = '';
-            loginPasswordInput.value = '';
-            loginMessageDisplay.textContent = '';
-        });
-
-        // Reset Password Button Listener
-        resetPasswordButton.addEventListener('click', () => {
-            const mobile = resetMobileInput.value.trim();
-
-            if (!mobile || !isValidMobile(mobile)) {
-                showMessage("Invalid mobile format (e.g., 07XXXXXXXX).", "var(--danger-color)", passwordResetMessageDisplay);
-                resetMobileInput.classList.add('input-error');
-                return;
-            }
-            resetMobileInput.classList.remove('input-error');
-
-            const userIndex = simulatedUsers.findIndex(u => u.mobile === mobile);
-
-            if (userIndex !== -1) {
-                showSpinner();
-                setTimeout(() => { // Simulate network delay
-                    const newPassword = Math.random().toString(36).slice(-8);
-                    simulatedUsers[userIndex].password = newPassword;
-                    saveGameData();
-
-                    showMessage(`Your new password is: <strong>${newPassword}</strong>. Please use this to login.`, "var(--success-color)", passwordResetMessageDisplay);
-                    hideSpinner();
-                    setTimeout(() => {
-                        hideModal(passwordResetModal);
-                        showModal(loginModal);
-                        loginMobileInput.value = mobile;
-                        loginPasswordInput.value = newPassword;
-                        loginMessageDisplay.textContent = 'Please login with your new password.';
-                        loginMessageDisplay.style.color = 'var(--secondary-color)';
-                    }, 3000);
-                }, 1000);
-            } else {
-                showMessage("No account found with this mobile number.", "var(--danger-color)", passwordResetMessageDisplay);
-                resetMobileInput.classList.add('input-error');
-            }
-        });
-
-        // --- New Account Dropdown Functionality ---
-        dropdownDepositWithdraw.addEventListener('click', (e) => {
-            e.preventDefault();
-            accountDropdown.classList.remove('show');
-            showModal(depositWithdrawModal);
-            updateModalBalance();
-            document.querySelector('.modal-tab-button[data-modal-tab="deposit"]').click();
-        });
-
-        dropdownChangePassword.addEventListener('click', (e) => {
-            e.preventDefault();
-            accountDropdown.classList.remove('show');
-            showModal(changePasswordModal);
-            changePasswordMessageDisplay.textContent = '';
-            currentPasswordInput.value = '';
-            newPasswordInput.value = '';
-            confirmNewPasswordInput.value = '';
-            currentPasswordInput.classList.remove('input-error');
-            newPasswordInput.classList.remove('input-error');
-            confirmNewPasswordInput.classList.remove('input-error');
-        });
-
-        dropdownHowToPlay.addEventListener('click', (e) => {
-            e.preventDefault();
-            accountDropdown.classList.remove('show');
-            showModal(howToPlayModal);
-        });
-
-        dropdownLogout.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSpinner();
-            setTimeout(() => { // Simulate network delay
-                isLoggedIn = false;
-                currentUserId = null;
-                currentUserNickname = null;
-                balance = 1000;
-                playerBetHistory.length = 0;
-                
-                saveGameData();
-                updateAuthUI();
-                accountDropdown.classList.remove('show');
-                showMessage("You have been successfully logged out.", "var(--success-color)");
-                startPreRoundCountdown();
-                hideSpinner();
-            }, 500);
-        });
-
-        // --- Change Password Modal Logic ---
-        updatePasswordButton.addEventListener('click', () => {
-            const currentPass = currentPasswordInput.value.trim();
-            const newPass = newPasswordInput.value.trim();
-            const confirmNewPass = confirmNewPasswordInput.value.trim();
-
-            let hasError = false;
-            if (!currentPass) {
-                showMessage("Current password is required.", "var(--danger-color)", changePasswordMessageDisplay);
-                currentPasswordInput.classList.add('input-error');
-                hasError = true;
-            } else {
-                currentPasswordInput.classList.remove('input-error');
-            }
-            if (!newPass || !isValidPassword(newPass)) {
-                showMessage("New password must be 6-8 characters long.", "var(--danger-color)", changePasswordMessageDisplay);
-                newPasswordInput.classList.add('input-error');
-                hasError = true;
-            } else {
-                newPasswordInput.classList.remove('input-error');
-            }
-            if (newPass !== confirmNewPass) {
-                showMessage("New password and confirm password do not match.", "var(--danger-color)", changePasswordMessageDisplay);
-                confirmNewPasswordInput.classList.add('input-error');
-                hasError = true;
-            } else {
-                confirmNewPasswordInput.classList.remove('input-error');
-            }
-            if (hasError) return;
-
-            const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
-            if (userIndex === -1) {
-                showMessage("Error: User not found. Please re-login.", "var(--danger-color)", changePasswordMessageDisplay);
-                return;
-            }
-
-            if (simulatedUsers[userIndex].password !== currentPass) {
-                showMessage("Current password is incorrect.", "var(--danger-color)", changePasswordMessageDisplay);
-                currentPasswordInput.classList.add('input-error');
-                return;
-            }
-
-            showSpinner();
-            setTimeout(() => { // Simulate network delay
-                simulatedUsers[userIndex].password = newPass;
-                saveGameData();
-                showMessage("Password successfully updated!", "var(--success-color)", changePasswordMessageDisplay);
-                hideSpinner();
-                currentPasswordInput.value = '';
-                newPasswordInput.value = '';
-                confirmNewPasswordInput.value = '';
-                setTimeout(() => {
-                    hideModal(changePasswordModal);
-                }, 1500);
-            }, 1000);
-        });
-
-        // Theme Toggle Listener
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('light-theme');
-            if (document.body.classList.contains('light-theme')) {
-                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-            } else {
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            }
-            saveGameData(); // Save theme preference
-            drawGraph(); // Redraw graph to apply new colors
-        });
-
-
-        // Override saveGameData to also save playerBetHistory to the specific user
-        const originalSaveGameData = saveGameData;
-        saveGameData = function() {
-            if (isLoggedIn && currentUserId) {
-                const userIndex = simulatedUsers.findIndex(u => u.mobile === currentUserId);
-                if (userIndex !== -1) {
-                    simulatedUsers[userIndex].balance = balance;
-                    simulatedUsers[userIndex].playerBetHistory = playerBetHistory; // Save current player's history
-                }
-            }
-            originalSaveGameData(); // Call the original function to save other global states
-        };
-
-        // Fluctuate baseOnlineUsers every 5-10 seconds
-        function startOnlineUsersFluctuation() {
-            if (onlineUsersFluctuationInterval) clearInterval(onlineUsersFluctuationInterval);
-            onlineUsersFluctuationInterval = setInterval(() => {
-                // Fluctuate baseOnlineUsers between 80 and 120
-                baseOnlineUsers = Math.floor(Math.random() * (120 - 80 + 1)) + 80;
-                updateOnlineAndPlayingCounts();
-            }, 5000 + Math.random() * 5000); // Between 5 and 10 seconds
-        }
+        allCloseModalButtons.forEach(button => button.addEventListener('click', (e) => hideModal(document.getElementById(e.target.dataset.modalClose))));
+        showSignupLink.addEventListener('click', (e) => { e.preventDefault(); hideModal(loginModal); showModal(signupModal); });
+        showLoginLink.addEventListener('click', (e) => { e.preventDefault(); hideModal(signupModal); showModal(loginModal); });
 
         // --- Initial Load ---
         window.onload = () => {
-            loadGameData(); // Load data first
             gameCanvas.width = gameCanvas.clientWidth;
             gameCanvas.height = gameCanvas.clientHeight;
-            confettiCanvas.width = confettiCanvas.clientWidth; // Set confetti canvas size
-            confettiCanvas.height = confettiCanvas.clientHeight; // Set confetti canvas size
+            confettiCanvas.width = confettiCanvas.clientWidth;
+            confettiCanvas.height = confettiCanvas.clientHeight;
             
             initStars(); 
-
-            updateCrashHistoryDisplay(); 
-            updatePlayerHistoryDisplay(); 
-            updateModalBalance(); // Initial update for modal balances
-            updateAuthUI(); // Set initial UI based on login state
-            updateLeaderboardDisplay(); // Initial leaderboard display
-            startOnlineUsersFluctuation(); // Start fluctuating online users
-
-            // Clear existing chat messages and add the two new ones
-            chatMessagesDiv.innerHTML = '';
-            addChatMessage("Senko Mtato", "Welcome to Prince Alex Jet!");
-            addChatMessage("Nyalez", "Good luck everyone!");
-
-            startPreRoundCountdown(); // Always start the countdown, but betting is restricted if not logged in
-
-            // Initialize audio context on first user interaction for browser policy compliance
+            updateAuthUI();
+            startOnlineUsersFluctuation();
+            startPreRoundCountdown();
             document.body.addEventListener('click', initializeAudio, { once: true });
         };
 
-        // Handle window resize to adjust canvas
         window.addEventListener('resize', () => {
             gameCanvas.width = gameCanvas.clientWidth;
             gameCanvas.height = gameCanvas.clientHeight;
-            confettiCanvas.width = confettiCanvas.clientWidth; // Resize confetti canvas
-            confettiCanvas.height = confettiCanvas.clientHeight; // Resize confetti canvas
-            initStars(); 
-            if (isGameRunning) {
-                drawGraph();
-            } else {
-                resetAnimation(); 
+            confettiCanvas.width = confettiCanvas.clientWidth;
+            confettiCanvas.height = confettiCanvas.clientHeight;
+            initStars();
+            drawGraph();
+        });
+
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN') {
+                loadUserData();
+            } else if (event === 'SIGNED_OUT') {
+                window.location.reload();
             }
         });
 
