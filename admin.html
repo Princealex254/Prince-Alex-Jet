@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel - Prince Alex Jet</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="supabaseGame.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+    h1 { color: #444; }
+    table { border-collapse: collapse; width: 100%; background: white; margin-bottom: 30px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background: #eee; }
+    input, select, button { padding: 8px; margin: 5px 0; }
+    .success { color: green; }
+    .error { color: red; }
+    #wallet-info { margin: 10px 0; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel - Prince Alex Jet</h1>
+
+  <h2>Resolve All Pending Bets</h2>
+  <label>Crash Multiplier:</label>
+  <input type="number" id="admin-crash-multiplier" step="0.01" placeholder="e.g. 1.45" />
+  <button onclick="adminResolveAllPendingBets()">Resolve Pending Bets</button>
+  <p id="resolve-status"></p>
+
+  <hr>
+
+  <h2>Update User Funds</h2>
+  <label>Select User:</label>
+  <select id="admin-user-id" onchange="displayWalletInfo()"></select>
+  <div id="wallet-info"></div>
+  <label>Amount:</label>
+  <input type="number" id="admin-amount" /><br>
+  <label>Bonus:</label>
+  <input type="number" id="admin-bonus" /><br>
+  <button onclick="adminUpdateUserFunds()">Update Wallet</button>
+  <p id="fund-status"></p>
+
+  <hr>
+
+  <h2>Danger Zone</h2>
+  <button onclick="confirmResetWallet()">Reset Wallet (Zero Out)</button>
+  <button onclick="confirmDeleteUser()">Delete User</button>
+  <p id="danger-status"></p>
+
+  <hr>
+
+  <h2>Recent Bets</h2>
+  <button onclick="loadRecentBets()">Refresh Bets</button>
+  <table>
+    <thead>
+      <tr><th>User</th><th>Bet</th><th>Status</th><th>Multiplier</th><th>Created</th></tr>
+    </thead>
+    <tbody id="recent-bets"></tbody>
+  </table>
+
+  <script>
+    const SUPABASE_URL = 'https://yigtwtapnqbpmnoeitpa.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadAdminUserDropdown() {
+      const { data: profiles } = await supabase.from('profiles').select('id, nickname');
+      const dropdown = document.getElementById('admin-user-id');
+      dropdown.innerHTML = '';
+      profiles.forEach(user => {
+        const opt = document.createElement('option');
+        opt.value = user.id;
+        opt.textContent = `${user.nickname || 'User'} - ${user.id.slice(0, 6)}`;
+        dropdown.appendChild(opt);
+      });
+      displayWalletInfo();
+    }
+
+    window.addEventListener('DOMContentLoaded', loadAdminUserDropdown);
+
+    async function displayWalletInfo() {
+      const userId = document.getElementById('admin-user-id').value;
+      const infoBox = document.getElementById('wallet-info');
+      if (!userId) return;
+      const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', userId).single();
+      if (!wallet) {
+        infoBox.textContent = 'Wallet not found';
+      } else {
+        infoBox.textContent = `Balance: ${wallet.balance}, Bonus: ${wallet.bonus}, Withdrawable: ${wallet.withdrawable}`;
+      }
+    }
+
+    async function adminUpdateUserFunds() {
+      const userId = document.getElementById('admin-user-id').value.trim();
+      const amount = parseFloat(document.getElementById('admin-amount').value);
+      const bonus = parseFloat(document.getElementById('admin-bonus').value);
+      const statusEl = document.getElementById('fund-status');
+
+      if (!userId || isNaN(amount) || isNaN(bonus)) {
+        statusEl.textContent = 'Fill in all fields correctly.';
+        statusEl.className = 'error';
+        return;
+      }
+
+      const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', userId).single();
+      if (!wallet) {
+        statusEl.textContent = 'User wallet not found.';
+        statusEl.className = 'error';
+        return;
+      }
+
+      const newBalance = wallet.balance + amount;
+      const newBonus = wallet.bonus + bonus;
+      const newWithdrawable = newBalance - newBonus;
+
+      await supabase.from('wallets').update({
+        balance: newBalance,
+        bonus: newBonus,
+        withdrawable: newWithdrawable,
+        updated_at: new Date()
+      }).eq('user_id', userId);
+
+      statusEl.textContent = 'Wallet updated successfully.';
+      statusEl.className = 'success';
+      displayWalletInfo();
+    }
+
+    function confirmResetWallet() {
+      if (confirm('Are you sure you want to reset this user’s wallet to 0?')) {
+        adminResetWallet();
+      }
+    }
+
+    function confirmDeleteUser() {
+      if (confirm('Are you sure you want to delete this user’s data? This cannot be undone.')) {
+        adminDeleteUser();
+      }
+    }
+
+    async function adminResetWallet() {
+      const userId = document.getElementById('admin-user-id').value.trim();
+      const statusEl = document.getElementById('danger-status');
+      if (!userId) {
+        statusEl.textContent = 'Enter user ID.';
+        statusEl.className = 'error';
+        return;
+      }
+      const { error } = await supabase.from('wallets').update({ balance: 0, bonus: 0, withdrawable: 0 }).eq('user_id', userId);
+      if (error) {
+        statusEl.textContent = error.message;
+        statusEl.className = 'error';
+      } else {
+        statusEl.textContent = 'Wallet reset to 0.';
+        statusEl.className = 'success';
+        displayWalletInfo();
+      }
+    }
+
+    async function adminDeleteUser() {
+      const userId = document.getElementById('admin-user-id').value.trim();
+      const statusEl = document.getElementById('danger-status');
+      if (!userId) {
+        statusEl.textContent = 'Enter user ID.';
+        statusEl.className = 'error';
+        return;
+      }
+      await supabase.from('wallets').delete().eq('user_id', userId);
+      await supabase.from('profiles').delete().eq('id', userId);
+      await supabase.from('bets').delete().eq('user_id', userId);
+      statusEl.textContent = 'User data deleted from public tables (wallet, profile, bets).';
+      statusEl.className = 'success';
+      loadAdminUserDropdown();
+    }
+
+    async function loadRecentBets() {
+      const { data: bets } = await supabase.from('bets').select('*').order('created_at', { ascending: false }).limit(20);
+      const tbody = document.getElementById('recent-bets');
+      tbody.innerHTML = '';
+      bets.forEach(bet => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${bet.user_id.slice(0, 6)}</td>
+          <td>${bet.bet_amount}</td>
+          <td>${bet.result_status}</td>
+          <td>${bet.multiplier || '-'}</td>
+          <td>${new Date(bet.created_at).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
