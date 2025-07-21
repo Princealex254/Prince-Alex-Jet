@@ -1238,6 +1238,19 @@
             .chat-messages {
                 font-size: 0.8rem;
             }
+
+            /* Adjust font size for overlays on smaller screens */
+            #multiplier-display-overlay {
+                font-size: 2.5rem; /* Further reduced font size for mobile */
+            }
+
+            #countdown-timer-overlay {
+                font-size: 3.5rem; /* Further reduced font size for mobile */
+            }
+
+            #busted-text-overlay {
+                font-size: 1.5rem; /* Further reduced font size for mobile */
+            }
         }
 
         /* Tooltip container */
@@ -1744,9 +1757,13 @@
 
     <script>
         const { createClient } = supabase
+        // IMPORTANT: Replace 'YOUR_SUPABASE_URL' and 'YOUR_SUPABASE_ANON_KEY' with your actual Supabase project details.
+        // You can find these in your Supabase project settings under "API".
+        // If you continue to get "invalid API" errors, double-check your Supabase project's
+        // Row Level Security (RLS) policies and ensure they allow sign-ups and data inserts.
         const supabaseClient = createClient(
           'https://yigtwtapnqbpmnoeitpa.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpZ3R3dGFwbnFicG1ub2VpdHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDA4MTEsImexciI6MjA2ODY3NjgxMX0.rKF2MwO94wPeT2V0rDsypNcwjOk2wN9rMwmiYo79T2g'
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpZ3R3dGFwbnFicG1ub2VpdHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDA4MTEsImV4cCI6MjA2ODY3NjgxMX0.rKF2MwO94wPeT2V0rDsypNcwjOk2wN9rMwmiYo79T2g'
         );
     </script>
     <script defer>
