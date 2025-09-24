@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Panel - Prince Alex Jet</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="supabaseGame.js"></script>
+  <script type="module" src="firebase-shim.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
     h1 { color: #444; }
@@ -59,12 +58,10 @@
   </table>
 
   <script>
-    const SUPABASE_URL = 'https://yigtwtapnqbpmnoeitpa.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = supabase.createClient();
 
     async function loadAdminUserDropdown() {
-      const { data: profiles } = await supabase.from('profiles').select('id, nickname');
+      const { data: profiles } = await supabaseClient.from('profiles').select('id, nickname');
       const dropdown = document.getElementById('admin-user-id');
       dropdown.innerHTML = '';
       profiles.forEach(user => {
@@ -82,7 +79,7 @@
       const userId = document.getElementById('admin-user-id').value;
       const infoBox = document.getElementById('wallet-info');
       if (!userId) return;
-      const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', userId).single();
+      const { data: wallet } = await supabaseClient.from('wallets').select('*').eq('user_id', userId).single();
       if (!wallet) {
         infoBox.textContent = 'Wallet not found';
       } else {
@@ -102,7 +99,7 @@
         return;
       }
 
-      const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', userId).single();
+      const { data: wallet } = await supabaseClient.from('wallets').select('*').eq('user_id', userId).single();
       if (!wallet) {
         statusEl.textContent = 'User wallet not found.';
         statusEl.className = 'error';
@@ -113,7 +110,7 @@
       const newBonus = wallet.bonus + bonus;
       const newWithdrawable = newBalance - newBonus;
 
-      await supabase.from('wallets').update({
+      await supabaseClient.from('wallets').update({
         balance: newBalance,
         bonus: newBonus,
         withdrawable: newWithdrawable,
@@ -145,7 +142,7 @@
         statusEl.className = 'error';
         return;
       }
-      const { error } = await supabase.from('wallets').update({ balance: 0, bonus: 0, withdrawable: 0 }).eq('user_id', userId);
+      const { error } = await supabaseClient.from('wallets').update({ balance: 0, bonus: 0, withdrawable: 0 }).eq('user_id', userId);
       if (error) {
         statusEl.textContent = error.message;
         statusEl.className = 'error';
@@ -164,16 +161,16 @@
         statusEl.className = 'error';
         return;
       }
-      await supabase.from('wallets').delete().eq('user_id', userId);
-      await supabase.from('profiles').delete().eq('id', userId);
-      await supabase.from('bets').delete().eq('user_id', userId);
+      await supabaseClient.from('wallets').delete().eq('user_id', userId);
+      await supabaseClient.from('profiles').delete().eq('id', userId);
+      await supabaseClient.from('bets').delete().eq('user_id', userId);
       statusEl.textContent = 'User data deleted from public tables (wallet, profile, bets).';
       statusEl.className = 'success';
       loadAdminUserDropdown();
     }
 
     async function loadRecentBets() {
-      const { data: bets } = await supabase.from('bets').select('*').order('created_at', { ascending: false }).limit(20);
+      const { data: bets } = await supabaseClient.from('bets').select('*').order('created_at', { ascending: false }).limit(20);
       const tbody = document.getElementById('recent-bets');
       tbody.innerHTML = '';
       bets.forEach(bet => {
@@ -187,6 +184,51 @@
         `;
         tbody.appendChild(tr);
       });
+    }
+  
+    async function adminResolveAllPendingBets() {
+      const statusEl = document.getElementById('resolve-status');
+      const multiplierInput = document.getElementById('admin-crash-multiplier');
+      const crashMultiplier = parseFloat(multiplierInput.value);
+      if (isNaN(crashMultiplier) || crashMultiplier < 1.0) {
+        statusEl.textContent = 'Enter a valid crash multiplier (>= 1.0).';
+        statusEl.className = 'error';
+        return;
+      }
+      statusEl.textContent = 'Resolving pending bets...';
+      statusEl.className = '';
+      try {
+        const { data: pendingBets } = await supabaseClient.from('bets').select('*').eq('result_status', 'pending');
+        if (!pendingBets || pendingBets.length === 0) {
+          statusEl.textContent = 'No pending bets to resolve.';
+          statusEl.className = 'success';
+          return;
+        }
+        for (const bet of pendingBets) {
+          const didWin = bet.cashout_at && crashMultiplier >= bet.cashout_at;
+          const result_status = didWin ? 'won' : 'lost';
+          const appliedMultiplier = didWin ? (bet.cashout_at || crashMultiplier) : crashMultiplier;
+          const payout = didWin ? (bet.bet_amount * appliedMultiplier) : 0;
+          await supabaseClient.from('bets').update({ result_status, multiplier: crashMultiplier, payout }).eq('id', bet.id);
+          if (payout > 0) {
+            const { data: wallet } = await supabaseClient.from('wallets').select('*').eq('user_id', bet.user_id).single();
+            if (wallet) {
+              await supabaseClient.from('wallets').update({
+                balance: (wallet.balance || 0) + payout,
+                withdrawable: (wallet.withdrawable || 0) + payout
+              }).eq('user_id', bet.user_id);
+            }
+          }
+        }
+        // Save crash multiplier as a game round
+        await supabaseClient.from('game_rounds').insert({ crash_multiplier: crashMultiplier });
+        statusEl.textContent = 'All pending bets resolved.';
+        statusEl.className = 'success';
+        loadRecentBets();
+      } catch (e) {
+        statusEl.textContent = e.message || 'Error resolving bets.';
+        statusEl.className = 'error';
+      }
     }
   </script>
 </body>
