@@ -2646,7 +2646,7 @@
 	<script type="module">
 		import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 		import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-		import { getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, query, where, orderBy, limit, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+		import { getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, query, where, orderBy, limit, getDocs, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 		const firebaseConfig = {
 			apiKey: "AIzaSyC8-TWRr_vOMTv72scXxu-9l5uVHRVputo",
@@ -2662,7 +2662,7 @@
 		const auth = getAuth(fbApp);
 
 		// Expose Firebase helpers to window for non-module scripts
-		window.fire = { db, auth, doc, getDoc, setDoc, updateDoc, addDoc, collection, query, where, orderBy, limit, getDocs, serverTimestamp };
+		window.fire = { db, auth, doc, getDoc, setDoc, updateDoc, addDoc, collection, query, where, orderBy, limit, getDocs, serverTimestamp, onSnapshot };
 		window.fireAuth = { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, signOut, updateProfile };
 	</script>
     <script defer>
@@ -2797,7 +2797,7 @@
         let preRoundTimer = 0; 
         const MAX_HISTORY_ITEMS = 10; // Max items to display in crash history
 
-        let curvePoints = [{ x: 0, y: 0 }]; 
+        let curvePoints = []; 
         let gameTicks = 0; 
 
         // Authentication State
@@ -2896,22 +2896,34 @@
         }
 
         function getCrashMultiplier() {
-            nonce++;
-            const hmac = CryptoJS.HmacSHA256(`${nonce}:${clientSeed}`, serverSeed).toString();
-            const hex = hmac.substring(0, 13);
-            const intVal = parseInt(hex, 16);
-            const max13Hex = 0xFFFFFFFFFFFFF;
-            let normalized = intVal / (max13Hex + 1);
-            if (normalized >= 1) {
-                normalized = 0.9999999999999999;
+            // Check if admin control is enabled
+            if (adminSettings.multiplierMode === 'manual' && adminSettings.nextCrashMultiplier) {
+                console.log('Using admin manual multiplier:', adminSettings.nextCrashMultiplier);
+                const adminMultiplier = adminSettings.nextCrashMultiplier;
+                adminSettings.nextCrashMultiplier = null; // Reset after use
+                return adminMultiplier;
             }
-            const crash = 100 / (100 - (normalized * 99));
-            const bustCheckHex = hmac.substring(13, 14);
-            const bustCheckInt = parseInt(bustCheckHex, 16);
-            if (bustCheckInt % 100 < 1) {
-                return 1.00;
+            
+            // Use fair random distribution
+            return generateFairRandomMultiplier();
+        }
+
+        function generateFairRandomMultiplier() {
+            const random = Math.random() * 100; // 0-100
+            
+            if (random <= 50) {
+                // Range 1.01-3.0 (50% probability)
+                return Math.random() * (3.0 - 1.01) + 1.01;
+            } else if (random <= 70) {
+                // Range 3.0-10.0 (20% probability)
+                return Math.random() * (10.0 - 3.0) + 3.0;
+            } else if (random <= 90) {
+                // Range 10.0-20.0 (20% probability)
+                return Math.random() * (20.0 - 10.0) + 10.0;
+            } else {
+                // Range 20.0-1000.0 (10% probability)
+                return Math.random() * (1000.0 - 20.0) + 20.0;
             }
-            return Math.max(1.00, parseFloat(crash.toFixed(2)));
         }
 
         async function loadUserData() {
@@ -3386,11 +3398,12 @@
             initializeUIForPreRound();
             isGameRunning = false;
 
-            preRoundTimer = 6;
+            preRoundTimer = adminSettings.countdownTime || 6;
             countdownTimerOverlay.textContent = preRoundTimer;
             
             // Update game state
             updateGameState('countdown', { roundStartTime: Date.now() });
+            updateGameStatus('Running', 'countdown');
             showMessage(`Next round starts in ${preRoundTimer} seconds. Place your bets!`);
 
             if (roundCountdownInterval) clearInterval(roundCountdownInterval);
@@ -3441,7 +3454,25 @@
             crashMultiplier = getCrashMultiplier();
             console.log("Calculated Crash Multiplier:", crashMultiplier);
 
+            // Initialize flight path from bottom-left corner
+            curvePoints = [];
+            gameTicks = 0;
+            multiplier = 1.00;
+            
+            // Start the flight path from bottom-left corner (1.00x multiplier)
+            const startX = PADDING_X;
+            const startY = gameCanvas.height - PADDING_Y; // Force bottom of canvas
+            curvePoints.push({ x: startX, y: startY });
+            
+            console.log("Flight path initialized from bottom-left corner:", { 
+                x: startX, 
+                y: startY, 
+                canvasHeight: gameCanvas.height,
+                paddingY: PADDING_Y
+            });
+
             isGameRunning = true;
+            updateGameStatus('Running', 'flying');
             if (currentBetId) {
                 hasCashedOut = false;
                 cashoutButton.disabled = false;
@@ -3460,12 +3491,13 @@
             updateGameState('flying', { roundStartTime: Date.now() });
             
             showMessage(`Round started! Jet is flying...`, 'var(--secondary-color)');
-            gameLogicInterval = setInterval(gameLoop, 100); // Changed to gameLogicInterval
+            gameLogicInterval = setInterval(gameLoop, 100); // Original working timing
         }
 
         function gameLoop() {
             if (!isGameRunning) return;
 
+            // Simple and effective multiplier growth - like original Aviator
             multiplier += 0.01 + (multiplier * 0.01);
             multiplierDisplayOverlay.textContent = `${multiplier.toFixed(2)}x`;
 
@@ -3633,6 +3665,7 @@
                 gameLogicInterval = null;
             }
             isGameRunning = false;
+            updateGameStatus('Crashed', 'crashed');
             
             // Update game state
             updateGameState('crashed', { roundNumber: gameState.roundNumber + 1 });
@@ -3739,7 +3772,13 @@
         function resetAnimation() {
             multiplier = 1.00;
             gameTicks = 0;
-            curvePoints = [{ x: ticksToX(0), y: multToY(1.00) }]; 
+            
+            // Reset flight path to start from bottom-left corner
+            curvePoints = [];
+            const startX = PADDING_X;
+            const startY = gameCanvas.height - PADDING_Y; // Force bottom of canvas
+            curvePoints.push({ x: startX, y: startY });
+            
             dynamicMaxMultiplierY = 10.0; 
             drawGraph(); 
             multiplierDisplayOverlay.textContent = '1.00x';
@@ -4507,6 +4546,688 @@
             return calculatedMultiplier;
         }
 
+        // --- Admin Control Integration ---
+        let adminControlListener = null;
+        let multiplierControlListener = null;
+        let adminSettings = {
+            minMultiplier: 1.01,
+            maxMultiplier: 1000,
+            countdownTime: 6,
+            nextCrashMultiplier: null,
+            multiplierMode: 'fair' // Fair random distribution
+        };
+
+        let probabilitySettings = {
+            ranges: [
+                { min: 1.01, max: 2.00, probability: 50 },
+                { min: 2.01, max: 6.00, probability: 30 },
+                { min: 6.01, max: 20.00, probability: 10 },
+                { min: 20.01, max: 1000.00, probability: 10 }
+            ]
+        };
+
+        // Cache for probability settings to avoid repeated Firestore reads
+        let probabilitySettingsCache = {
+            lastUpdated: 0,
+            data: null,
+            cacheTimeout: 5000 // 5 seconds cache
+        };
+
+        function initializeAdminControls() {
+            console.log('Initializing admin controls...');
+            console.log('Firebase available:', !!fire);
+            console.log('Firestore available:', !!fire.db);
+            
+            // Listen for game control commands
+            adminControlListener = fire.onSnapshot(
+                fire.doc(fire.db, 'admin_controls', 'game_control'),
+                (doc) => {
+                    console.log('Admin control document changed:', doc.exists());
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        console.log('Admin control data received:', data);
+                        handleAdminGameControl(data);
+                    } else {
+                        console.log('Admin control document does not exist yet');
+                    }
+                },
+                (error) => {
+                    console.error('Error listening to admin controls:', error);
+                }
+            );
+            console.log('Admin control listener set up');
+            
+            // Test the connection by trying to read the document
+            fire.getDoc(fire.doc(fire.db, 'admin_controls', 'game_control'))
+                .then((doc) => {
+                    console.log('Test read of admin_controls/game_control:', doc.exists());
+                    if (doc.exists()) {
+                        console.log('Current admin control data:', doc.data());
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error testing admin control connection:', error);
+                });
+
+            // Listen for multiplier control commands
+            multiplierControlListener = fire.onSnapshot(
+                fire.doc(fire.db, 'admin_controls', 'multiplier_control'),
+                (doc) => {
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        handleAdminMultiplierControl(data);
+                    }
+                },
+                (error) => {
+                    console.error('Error listening to multiplier controls:', error);
+                }
+            );
+
+            // Listen for probability settings changes (with debouncing)
+            let probabilityUpdateTimeout = null;
+            fire.onSnapshot(
+                fire.doc(fire.db, 'admin_settings', 'probability_settings'),
+                (doc) => {
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        console.log('Probability settings updated via Firestore:', data);
+                        
+                        // Debounce updates to prevent rapid changes
+                        if (probabilityUpdateTimeout) {
+                            clearTimeout(probabilityUpdateTimeout);
+                        }
+                        
+                        probabilityUpdateTimeout = setTimeout(() => {
+                            if (data.ranges && data.ranges.length === 4) {
+                                probabilitySettings.ranges = data.ranges;
+                                console.log('Updated probability ranges via Firestore:', probabilitySettings.ranges);
+                            }
+                            if (data.multiplierMode) {
+                                adminSettings.multiplierMode = data.multiplierMode;
+                                console.log('Updated multiplier mode via Firestore:', data.multiplierMode);
+                            }
+                        }, 100); // 100ms debounce
+                    }
+                },
+                (error) => {
+                    console.error('Error listening to probability settings:', error);
+                }
+            );
+
+            // Load admin settings
+            loadAdminSettings();
+            loadProbabilitySettings();
+        }
+
+        async function handleAdminGameControl(data) {
+            console.log('Received admin game control:', data);
+            console.log('Current game state - isGameRunning:', isGameRunning, 'gameLogicInterval:', gameLogicInterval);
+            
+            switch (data.action) {
+                case 'start':
+                    console.log('Processing start command...');
+                    if (!isGameRunning) {
+                        console.log('Starting new game...');
+                        startPreRoundCountdown();
+                        updateGameStatus('Running', 'countdown');
+                    } else {
+                        console.log('Game already running, ignoring start command');
+                    }
+                    break;
+                case 'pause':
+                    console.log('Processing pause command...');
+                    if (isGameRunning) {
+                        console.log('Pausing game...');
+                        clearInterval(gameLogicInterval);
+                        gameLogicInterval = null;
+                        isGameRunning = false;
+                        updateGameStatus('Paused', 'paused');
+                        showGameStatusMessage('Game Paused', 'warning');
+                    } else {
+                        console.log('Game not running, ignoring pause command');
+                    }
+                    break;
+                case 'resume':
+                    console.log('Processing resume command...');
+                    if (!isGameRunning) {
+                        console.log('Resuming game...');
+                        // Resume from current multiplier if we have one
+                        if (multiplier > 1.00) {
+                            isGameRunning = true;
+                            gameLogicInterval = setInterval(gameLoop, 100);
+                            updateGameStatus('Running', 'flying');
+                            showGameStatusMessage('Game Resumed', 'success');
+                        } else {
+                            // Start a new round if no current multiplier
+                            startPreRoundCountdown();
+                            updateGameStatus('Running', 'countdown');
+                            showGameStatusMessage('Game Resumed - New Round Starting', 'success');
+                        }
+                    } else {
+                        console.log('Game already running, ignoring resume command');
+                    }
+                    break;
+                case 'stop':
+                    console.log('Processing stop command...');
+                    console.log('Stopping game...');
+                    clearInterval(gameLogicInterval);
+                    gameLogicInterval = null;
+                    isGameRunning = false;
+                    initializeUIForPreRound();
+                    updateGameStatus('Stopped', 'stopped');
+                    showGameStatusMessage('Game Stopped', 'danger');
+                    break;
+                case 'force_crash':
+                    console.log('Processing force crash command...');
+                    if (isGameRunning) {
+                        console.log('Force crashing game...');
+                        crash();
+                    } else {
+                        console.log('Game not running, ignoring force crash command');
+                    }
+                    break;
+                case 'crash_now':
+                    console.log('Processing crash now command...');
+                    if (isGameRunning) {
+                        console.log('Crashing game now...');
+                        crash();
+                    } else {
+                        console.log('Game not running, ignoring crash now command');
+                    }
+                    break;
+                default:
+                    console.log('Unknown admin command:', data.action);
+            }
+        }
+
+        async function handleAdminMultiplierControl(data) {
+            console.log('Received admin multiplier control:', data);
+            
+            if (data.nextCrashMultiplier) {
+                adminSettings.nextCrashMultiplier = data.nextCrashMultiplier;
+                adminSettings.multiplierMode = data.mode || 'manual';
+            }
+        }
+
+        async function loadAdminSettings() {
+            try {
+                const settingsRef = fire.doc(fire.db, 'admin_settings', 'game_settings');
+                const settingsSnap = await fire.getDoc(settingsRef);
+                
+                if (settingsSnap.exists()) {
+                    const settings = settingsSnap.data();
+                    adminSettings.minMultiplier = settings.minMultiplier || 1.01;
+                    adminSettings.maxMultiplier = settings.maxMultiplier || 1000;
+                    adminSettings.countdownTime = settings.countdownTime || 6;
+                }
+            } catch (error) {
+                console.error('Error loading admin settings:', error);
+            }
+        }
+
+        function updateGameStatus(state, phase) {
+            // Update game status in Firestore for admin monitoring
+            const statusRef = fire.doc(fire.db, 'admin_controls', 'game_status');
+            fire.setDoc(statusRef, {
+                state: state,
+                phase: phase,
+                currentMultiplier: multiplier,
+                playersOnline: simulatedPlayers.length,
+                activeBets: currentBetId ? 1 : 0,
+                timestamp: fire.serverTimestamp()
+            }).catch(error => {
+                console.error('Error updating game status:', error);
+            });
+        }
+
+        function getAdminCrashMultiplier() {
+            // Check if admin has set a specific multiplier
+            if (adminSettings.nextCrashMultiplier && adminSettings.multiplierMode === 'manual') {
+                const adminMultiplier = adminSettings.nextCrashMultiplier;
+                adminSettings.nextCrashMultiplier = null; // Reset after use
+                return adminMultiplier;
+            }
+            
+            // Use probability-based generation if mode is probability
+            if (adminSettings.multiplierMode === 'probability') {
+                return generateProbabilityBasedMultiplier();
+            }
+            
+            // Use original random generation
+            const min = adminSettings.minMultiplier;
+            const max = adminSettings.maxMultiplier;
+            return Math.random() * (max - min) + min;
+        }
+
+        function generateProbabilityBasedMultiplier() {
+            const random = Math.random() * 100;
+            let cumulative = 0;
+
+            console.log('Generating probability-based multiplier with settings:', probabilitySettings.ranges);
+
+            for (const range of probabilitySettings.ranges) {
+                cumulative += range.probability;
+                if (random <= cumulative) {
+                    const multiplier = Math.random() * (range.max - range.min) + range.min;
+                    console.log(`Generated multiplier ${multiplier.toFixed(2)}x from range ${range.min}-${range.max} (${range.probability}%)`);
+                    return multiplier;
+                }
+            }
+
+            // Fallback to first range if something goes wrong
+            const firstRange = probabilitySettings.ranges[0];
+            const fallbackMultiplier = Math.random() * (firstRange.max - firstRange.min) + firstRange.min;
+            console.log(`Fallback multiplier ${fallbackMultiplier.toFixed(2)}x from first range`);
+            return fallbackMultiplier;
+        }
+
+        async function loadProbabilitySettings() {
+            try {
+                console.log('Loading probability settings...');
+                
+                // Check cache first
+                const now = Date.now();
+                if (probabilitySettingsCache.data && 
+                    (now - probabilitySettingsCache.lastUpdated) < probabilitySettingsCache.cacheTimeout) {
+                    console.log('Using cached probability settings');
+                    const cachedData = probabilitySettingsCache.data;
+                    if (cachedData.ranges && cachedData.ranges.length === 4) {
+                        probabilitySettings.ranges = cachedData.ranges;
+                    }
+                    if (cachedData.multiplierMode) {
+                        adminSettings.multiplierMode = cachedData.multiplierMode;
+                    }
+                    return;
+                }
+                
+                const probabilityRef = fire.doc(fire.db, 'admin_settings', 'probability_settings');
+                const probabilitySnap = await fire.getDoc(probabilityRef);
+                
+                if (probabilitySnap.exists()) {
+                    const settings = probabilitySnap.data();
+                    
+                    // Update cache
+                    probabilitySettingsCache.data = settings;
+                    probabilitySettingsCache.lastUpdated = now;
+                    
+                    if (settings.ranges && settings.ranges.length === 4) {
+                        probabilitySettings.ranges = settings.ranges;
+                        console.log('Loaded probability settings:', probabilitySettings.ranges);
+                    }
+                    
+                    // Update admin settings if available
+                    if (settings.multiplierMode) {
+                        adminSettings.multiplierMode = settings.multiplierMode;
+                        console.log('Updated multiplier mode to:', settings.multiplierMode);
+                    }
+                } else {
+                    console.log('No probability settings found, using defaults');
+                }
+            } catch (error) {
+                console.error('Error loading probability settings:', error);
+            }
+        }
+
+        // Direct admin command handler (fallback method)
+        window.handleDirectAdminCommand = function(action) {
+            console.log('Direct admin command received:', action);
+            handleAdminGameControl({ action: action });
+        };
+
+        // Direct probability settings update handler
+        window.handleDirectProbabilityUpdate = function(data) {
+            console.log('Direct probability update received:', data);
+            
+            if (data.ranges && data.ranges.length === 4) {
+                probabilitySettings.ranges = data.ranges;
+                console.log('Updated probability ranges via direct communication:', probabilitySettings.ranges);
+                
+                // Update cache
+                probabilitySettingsCache.data = data;
+                probabilitySettingsCache.lastUpdated = Date.now();
+            }
+            
+            if (data.multiplierMode) {
+                adminSettings.multiplierMode = data.multiplierMode;
+                console.log('Updated multiplier mode via direct communication:', data.multiplierMode);
+            }
+            
+            // Show notification to user
+            showGameStatusMessage('Probability settings updated!', 'success');
+            
+            // Test the new settings immediately
+            console.log('Testing new probability settings:');
+            for (let i = 0; i < 5; i++) {
+                const testMultiplier = generateProbabilityBasedMultiplier();
+                console.log(`Test ${i + 1}: ${testMultiplier.toFixed(2)}x`);
+            }
+        };
+
+        // Direct multiplier settings update handler
+        window.handleDirectMultiplierUpdate = function(data) {
+            console.log('Direct multiplier update received:', data);
+            
+            if (data.minMultiplier !== undefined) {
+                adminSettings.minMultiplier = data.minMultiplier;
+                console.log('Updated min multiplier:', data.minMultiplier);
+            }
+            
+            if (data.maxMultiplier !== undefined) {
+                adminSettings.maxMultiplier = data.maxMultiplier;
+                console.log('Updated max multiplier:', data.maxMultiplier);
+            }
+            
+            if (data.nextCrashMultiplier !== undefined) {
+                adminSettings.nextCrashMultiplier = data.nextCrashMultiplier;
+                console.log('Updated next crash multiplier:', data.nextCrashMultiplier);
+            }
+            
+            if (data.multiplierMode) {
+                adminSettings.multiplierMode = data.multiplierMode;
+                console.log('Updated multiplier mode:', data.multiplierMode);
+            }
+            
+            // Show notification to user
+            showGameStatusMessage('Multiplier settings updated!', 'success');
+        };
+
+        // Test function for admin controls (can be called from browser console)
+        window.testAdminStart = function() {
+            console.log('Testing admin start command...');
+            handleAdminGameControl({ action: 'start' });
+        };
+
+        window.testAdminPause = function() {
+            console.log('Testing admin pause command...');
+            handleAdminGameControl({ action: 'pause' });
+        };
+
+        window.testAdminResume = function() {
+            console.log('Testing admin resume command...');
+            handleAdminGameControl({ action: 'resume' });
+        };
+
+        window.testAdminStop = function() {
+            console.log('Testing admin stop command...');
+            handleAdminGameControl({ action: 'stop' });
+        };
+
+        // Test functions for probability system
+        window.testProbabilitySystem = function() {
+            console.log('Testing probability system...');
+            console.log('Current probability settings:', probabilitySettings);
+            console.log('Current multiplier mode:', adminSettings.multiplierMode);
+            
+            // Generate 10 test multipliers
+            console.log('Generating 10 test multipliers:');
+            for (let i = 0; i < 10; i++) {
+                const multiplier = generateProbabilityBasedMultiplier();
+                console.log(`Test ${i + 1}: ${multiplier.toFixed(2)}x`);
+            }
+        };
+
+        window.setProbabilityMode = function() {
+            adminSettings.multiplierMode = 'probability';
+            console.log('Set multiplier mode to probability');
+        };
+
+        window.setRandomMode = function() {
+            adminSettings.multiplierMode = 'random';
+            console.log('Set multiplier mode to random');
+        };
+
+        window.setManualMode = function() {
+            adminSettings.multiplierMode = 'manual';
+            console.log('Set multiplier mode to manual');
+        };
+
+        // Performance test function
+        window.testProbabilityPerformance = function() {
+            console.log('Testing probability system performance...');
+            const startTime = performance.now();
+            
+            // Test 1000 probability-based multiplier generations
+            for (let i = 0; i < 1000; i++) {
+                generateProbabilityBasedMultiplier();
+            }
+            
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+            
+            console.log(`Generated 1000 probability-based multipliers in ${duration.toFixed(2)}ms`);
+            console.log(`Average time per generation: ${(duration / 1000).toFixed(4)}ms`);
+            
+            // Test current settings
+            console.log('Current probability settings:', probabilitySettings);
+            console.log('Current multiplier mode:', adminSettings.multiplierMode);
+        };
+
+        // Comprehensive probability system test
+        window.testProbabilitySystemComprehensive = function() {
+            console.log('=== COMPREHENSIVE PROBABILITY SYSTEM TEST ===');
+            console.log('Current multiplier mode:', adminSettings.multiplierMode);
+            console.log('Current probability settings:', probabilitySettings);
+            
+            // Test different modes
+            const originalMode = adminSettings.multiplierMode;
+            
+            // Test probability mode
+            console.log('\n--- Testing Probability Mode ---');
+            adminSettings.multiplierMode = 'probability';
+            for (let i = 0; i < 10; i++) {
+                const multiplier = getCrashMultiplier();
+                console.log(`Probability test ${i + 1}: ${multiplier.toFixed(2)}x`);
+            }
+            
+            // Test random mode
+            console.log('\n--- Testing Random Mode ---');
+            adminSettings.multiplierMode = 'random';
+            for (let i = 0; i < 10; i++) {
+                const multiplier = getCrashMultiplier();
+                console.log(`Random test ${i + 1}: ${multiplier.toFixed(2)}x`);
+            }
+            
+            // Test manual mode
+            console.log('\n--- Testing Manual Mode ---');
+            adminSettings.multiplierMode = 'manual';
+            adminSettings.nextCrashMultiplier = 5.50;
+            for (let i = 0; i < 3; i++) {
+                const multiplier = getCrashMultiplier();
+                console.log(`Manual test ${i + 1}: ${multiplier.toFixed(2)}x`);
+            }
+            
+            // Restore original mode
+            adminSettings.multiplierMode = originalMode;
+            console.log('\n=== TEST COMPLETE ===');
+        };
+
+        // Test authentic Aviator flight mechanics
+        window.testAviatorFlightMechanics = function() {
+            console.log('=== TESTING AUTHENTIC AVIATOR FLIGHT MECHANICS ===');
+            
+            // Simulate flight for 10 seconds
+            const startTime = Date.now();
+            const testMultipliers = [];
+            let testTicks = 0;
+            
+            console.log('Simulating 10 seconds of flight...');
+            
+            const testInterval = setInterval(() => {
+                testTicks++;
+                const timeElapsed = testTicks * 50; // 50ms per tick
+                const baseMultiplier = 1.0;
+                const growthRate = 0.02;
+                
+                // Use the same calculation as the game
+                let testMultiplier = baseMultiplier + (Math.pow(1 + growthRate, timeElapsed / 1000) - 1) * 0.5;
+                const randomVariation = (Math.random() - 0.5) * 0.001;
+                testMultiplier += randomVariation;
+                testMultiplier = Math.max(1.00, testMultiplier);
+                
+                testMultipliers.push({
+                    time: timeElapsed,
+                    multiplier: testMultiplier,
+                    tick: testTicks
+                });
+                
+                console.log(`Tick ${testTicks}: ${testMultiplier.toFixed(2)}x (${timeElapsed}ms)`);
+                
+                if (timeElapsed >= 10000) { // 10 seconds
+                    clearInterval(testInterval);
+                    console.log('\n=== FLIGHT MECHANICS TEST COMPLETE ===');
+                    console.log('Final multiplier:', testMultipliers[testMultipliers.length - 1].multiplier.toFixed(2));
+                    console.log('Total ticks:', testTicks);
+                    console.log('Average multiplier growth rate:', 
+                        (testMultipliers[testMultipliers.length - 1].multiplier - 1) / 10);
+                }
+            }, 50);
+        };
+
+        // Test fair random multiplier distribution
+        window.testFairDistribution = function() {
+            console.log('=== TESTING FAIR MULTIPLIER DISTRIBUTION ===');
+            console.log('Testing 1000 random multipliers...');
+            
+            const results = {
+                range1: 0, // 1.01-3.0 (should be ~50%)
+                range2: 0, // 3.0-10.0 (should be ~20%)
+                range3: 0, // 10.0-20.0 (should be ~20%)
+                range4: 0  // 20.0-1000.0 (should be ~10%)
+            };
+            
+            const multipliers = [];
+            
+            for (let i = 0; i < 1000; i++) {
+                const multiplier = generateFairRandomMultiplier();
+                multipliers.push(multiplier);
+                
+                if (multiplier >= 1.01 && multiplier < 3.0) {
+                    results.range1++;
+                } else if (multiplier >= 3.0 && multiplier < 10.0) {
+                    results.range2++;
+                } else if (multiplier >= 10.0 && multiplier < 20.0) {
+                    results.range3++;
+                } else if (multiplier >= 20.0 && multiplier <= 1000.0) {
+                    results.range4++;
+                }
+            }
+            
+            console.log('Distribution Results:');
+            console.log(`Range 1.01-3.0: ${results.range1} (${(results.range1/10).toFixed(1)}%) - Expected: 50%`);
+            console.log(`Range 3.0-10.0: ${results.range2} (${(results.range2/10).toFixed(1)}%) - Expected: 20%`);
+            console.log(`Range 10.0-20.0: ${results.range3} (${(results.range3/10).toFixed(1)}%) - Expected: 20%`);
+            console.log(`Range 20.0-1000.0: ${results.range4} (${(results.range4/10).toFixed(1)}%) - Expected: 10%`);
+            
+            console.log('\nSample multipliers:');
+            for (let i = 0; i < 20; i++) {
+                console.log(`${i + 1}: ${multipliers[i].toFixed(2)}x`);
+            }
+            
+            console.log('=== FAIR DISTRIBUTION TEST COMPLETE ===');
+        };
+
+        // Visual debug function to test flight path
+        window.debugFlightPath = function() {
+            console.log('=== DEBUGGING FLIGHT PATH VISUALLY ===');
+            
+            // Clear current curve points
+            curvePoints = [];
+            
+            // Test with a simple diagonal line from bottom-left to top-right
+            const startX = PADDING_X;
+            const startY = gameCanvas.height - PADDING_Y; // Bottom of canvas
+            const endX = gameCanvas.width - PADDING_X;
+            const endY = PADDING_Y; // Top of canvas
+            
+            console.log('Creating test diagonal line:');
+            console.log('Start:', { x: startX, y: startY });
+            console.log('End:', { x: endX, y: endY });
+            
+            // Create 20 points along the diagonal
+            for (let i = 0; i <= 20; i++) {
+                const t = i / 20;
+                const x = startX + (endX - startX) * t;
+                const y = startY + (endY - startY) * t;
+                curvePoints.push({ x, y });
+                console.log(`Point ${i}: x=${x.toFixed(1)}, y=${y.toFixed(1)}`);
+            }
+            
+            // Force redraw
+            drawGraph();
+            console.log('Test diagonal line drawn. Check the canvas!');
+        };
+
+        // Function to show game status messages
+        function showGameStatusMessage(message, type = 'info') {
+            console.log('Showing game status message:', message, type);
+            
+            // Update the main message display
+            if (messageDisplay) {
+                messageDisplay.textContent = message;
+                
+                // Add appropriate styling based on type
+                messageDisplay.style.color = type === 'success' ? 'var(--success-color)' : 
+                                           type === 'warning' ? 'var(--warning-color)' : 
+                                           type === 'danger' ? 'var(--danger-color)' : 
+                                           'var(--text-color)';
+                
+                // Add a subtle animation
+                messageDisplay.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    messageDisplay.style.transform = 'scale(1)';
+                }, 200);
+            }
+            
+            // Also show a temporary notification
+            showNotification(message, type);
+        }
+
+        // Function to show temporary notifications
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: ${type === 'success' ? 'var(--success-color)' : 
+                            type === 'warning' ? 'var(--warning-color)' : 
+                            type === 'danger' ? 'var(--danger-color)' : 
+                            'var(--secondary-color)'};
+                color: ${type === 'success' || type === 'warning' || type === 'danger' ? 'white' : 'var(--text-color)'};
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 1000;
+                font-weight: 500;
+                max-width: 300px;
+                word-wrap: break-word;
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
         // --- Initial Load ---
         window.onload = () => {
             gameCanvas.width = gameCanvas.clientWidth;
@@ -4519,6 +5240,9 @@
             startOnlineUsersFluctuation();
             // Load crash history for all users (logged in or not)
             updateCrashHistoryDisplay();
+            
+            // Initialize admin control listeners
+            initializeAdminControls();
             
             // Load and check game state
             loadGameState();
