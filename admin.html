@@ -1,193 +1,2892 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Panel - Prince Alex Jet</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="supabaseGame.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-    h1 { color: #444; }
-    table { border-collapse: collapse; width: 100%; background: white; margin-bottom: 30px; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
-    th { background: #eee; }
-    input, select, button { padding: 8px; margin: 5px 0; }
-    .success { color: green; }
-    .error { color: red; }
-    #wallet-info { margin: 10px 0; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prince Alex Jet - Admin Dashboard</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;700&family=Poppins:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase + Firestore (ES Module) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, query, where, orderBy, limit, getDocs, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC8-TWRr_vOMTv72scXxu-9l5uVHRVputo",
+            authDomain: "group-saving-chama.firebaseapp.com",
+            projectId: "group-saving-chama",
+            storageBucket: "group-saving-chama.firebasestorage.app",
+            messagingSenderId: "570981365925",
+            appId: "1:570981365925:web:42422e51e4e02c6ab4f54c"
+        };
+
+        const fbApp = initializeApp(firebaseConfig);
+        const db = getFirestore(fbApp);
+        const auth = getAuth(fbApp);
+
+        // Expose Firebase helpers to window for non-module scripts
+        window.fire = { db, auth, doc, getDoc, setDoc, updateDoc, addDoc, collection, query, where, orderBy, limit, getDocs, serverTimestamp, onSnapshot };
+        window.fireAuth = { onAuthStateChanged, signInWithEmailAndPassword, signOut };
+    </script>
+    <style>
+        :root {
+            --primary-color: #1a1a2e;
+            --secondary-color: #16213e;
+            --accent-color: #00ff88;
+            --danger-color: #ff4757;
+            --warning-color: #ffa502;
+            --success-color: #00ff88;
+            --text-color: #ffffff;
+            --bg-color: #0f0f23;
+            --font-family-body: 'Poppins', 'Inter', sans-serif;
+            --font-family-display: 'Space Grotesk', 'Orbitron', sans-serif;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow-glow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family-body);
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 168, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 30%, rgba(0, 255, 136, 0.05) 0%, transparent 30%),
+                radial-gradient(circle at 70% 70%, rgba(0, 168, 255, 0.05) 0%, transparent 30%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(0, 255, 136, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 136, 0.05) 0%, 
+                transparent 50%, 
+                rgba(0, 168, 255, 0.05) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .login-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            font-family: var(--font-family-display);
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .login-header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent-color), #00d4aa);
+            border: none;
+            border-radius: 12px;
+            color: var(--bg-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+        }
+
+        /* Admin Dashboard */
+        .admin-dashboard {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .admin-header h1 {
+            font-family: var(--font-family-display);
+            color: var(--accent-color);
+            font-size: 1.8rem;
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #ff3742;
+            transform: translateY(-2px);
+        }
+
+        .admin-content {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.2),
+                0 0 0 1px rgba(0, 255, 136, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 136, 0.03) 0%, 
+                transparent 50%, 
+                rgba(0, 168, 255, 0.03) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .dashboard-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-color), #00d4aa);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--bg-color);
+            font-size: 1.2rem;
+        }
+
+        .card-title {
+            font-family: var(--font-family-display);
+            font-size: 1.3rem;
+            color: var(--text-color);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .table-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-color);
+        }
+
+        .data-table th {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 15px 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .data-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table tr:hover {
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent-color);
+        }
+
+        .status-banned {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--danger-color);
+        }
+
+        .status-pending {
+            background: rgba(255, 165, 2, 0.2);
+            color: var(--warning-color);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Form Overlay Styles */
+        .form-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .form-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .form-overlay-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(0, 255, 136, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .form-overlay.show .form-overlay-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .form-overlay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .form-overlay-title {
+            font-family: var(--font-family-display);
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            margin: 0;
+        }
+
+        .form-overlay-close {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .form-overlay-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--danger-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+        }
+
+        .form-group input[readonly] {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .form-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        .form-btn-primary {
+            background: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .form-btn-primary:hover {
+            background: #00d4aa;
+            transform: translateY(-2px);
+        }
+
+        .form-btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+        }
+
+        .form-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .form-btn-danger:hover {
+            background: #ff3742;
+            transform: translateY(-2px);
+        }
+
+        .form-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .form-message.success {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .form-message.error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+        }
+
+        .form-message.warning {
+            background: rgba(255, 165, 2, 0.1);
+            border: 1px solid var(--warning-color);
+            color: var(--warning-color);
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .admin-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .admin-nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-content {
+                padding: 15px;
+            }
+
+            .login-card {
+                padding: 30px 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>Admin Panel - Prince Alex Jet</h1>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
+                <p>Prince Alex Jet Management System</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="adminEmail">Email Address</label>
+                    <input type="email" id="adminEmail" required placeholder="admin@princealexjet.com">
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" required placeholder="Enter admin password">
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
 
-  <h2>Resolve All Pending Bets</h2>
-  <label>Crash Multiplier:</label>
-  <input type="number" id="admin-crash-multiplier" step="0.01" placeholder="e.g. 1.45" />
-  <button onclick="adminResolveAllPendingBets()">Resolve Pending Bets</button>
-  <p id="resolve-status"></p>
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="admin-dashboard">
+        <div class="admin-header">
+            <h1><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h1>
+            <div class="admin-nav">
+                <button class="nav-btn active" data-section="overview">Overview</button>
+                <button class="nav-btn" data-section="users">Users</button>
+                <button class="nav-btn" data-section="games">Games</button>
+                <button class="nav-btn" data-section="analytics">Analytics</button>
+                <button class="nav-btn" data-section="settings">Settings</button>
+            </div>
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
 
-  <hr>
+        <div class="admin-content">
+            <!-- Overview Section -->
+            <div id="overviewSection" class="dashboard-section">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="card-title">Total Users</div>
+                        </div>
+                        <div class="stat-value" id="totalUsers">-</div>
+                        <div class="stat-label">Registered Players</div>
+                    </div>
 
-  <h2>Update User Funds</h2>
-  <label>Select User:</label>
-  <select id="admin-user-id" onchange="displayWalletInfo()"></select>
-  <div id="wallet-info"></div>
-  <label>Amount:</label>
-  <input type="number" id="admin-amount" /><br>
-  <label>Bonus:</label>
-  <input type="number" id="admin-bonus" /><br>
-  <button onclick="adminUpdateUserFunds()">Update Wallet</button>
-  <p id="fund-status"></p>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div class="card-title">Active Games</div>
+                        </div>
+                        <div class="stat-value" id="activeGames">-</div>
+                        <div class="stat-label">Currently Playing</div>
+                    </div>
 
-  <hr>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <div class="card-title">Total Bets</div>
+                        </div>
+                        <div class="stat-value" id="totalBets">-</div>
+                        <div class="stat-label">All Time</div>
+                    </div>
 
-  <h2>Danger Zone</h2>
-  <button onclick="confirmResetWallet()">Reset Wallet (Zero Out)</button>
-  <button onclick="confirmDeleteUser()">Delete User</button>
-  <p id="danger-status"></p>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="card-title">Revenue</div>
+                        </div>
+                        <div class="stat-value" id="totalRevenue">-</div>
+                        <div class="stat-label">Platform Earnings</div>
+                    </div>
+                </div>
 
-  <hr>
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="card-title">Recent Activity</div>
+                    </div>
+                    <div id="recentActivity" class="loading">Loading recent activity...</div>
+                </div>
+            </div>
 
-  <h2>Recent Bets</h2>
-  <button onclick="loadRecentBets()">Refresh Bets</button>
-  <table>
-    <thead>
-      <tr><th>User</th><th>Bet</th><th>Status</th><th>Multiplier</th><th>Created</th></tr>
-    </thead>
-    <tbody id="recent-bets"></tbody>
-  </table>
+            <!-- Users Section -->
+            <div id="usersSection" class="dashboard-section hidden">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="card-title">User Management</div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Email</th>
+                                    <th>Nickname</th>
+                                    <th>Phone</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="7" class="loading">Loading users...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-  <script>
-    const SUPABASE_URL = 'https://yigtwtapnqbpmnoeitpa.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            <!-- Games Section -->
+            <div id="gamesSection" class="dashboard-section hidden">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <div class="card-title">Game Management</div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-primary" id="startGameBtn">
+                            <i class="fas fa-play"></i> Start New Game
+                        </button>
+                        <button class="btn btn-warning" id="pauseGameBtn">
+                            <i class="fas fa-pause"></i> Pause Game
+                        </button>
+                        <button class="btn btn-success" id="resumeGameBtn" style="display: none;">
+                            <i class="fas fa-play"></i> Resume Game
+                        </button>
+                        <button class="btn btn-danger" id="stopGameBtn">
+                            <i class="fas fa-stop"></i> Stop Game
+                        </button>
+                        <button class="btn btn-primary" id="forceCrashBtn">
+                            <i class="fas fa-bomb"></i> Force Crash
+                        </button>
+                        <button class="btn btn-warning" id="testDirectBtn">
+                            <i class="fas fa-flask"></i> Test Direct
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="gamesTable">
+                            <thead>
+                                <tr>
+                                    <th>Round #</th>
+                                    <th>Crash Multiplier</th>
+                                    <th>Timestamp</th>
+                                    <th>Players</th>
+                                    <th>Total Bets</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gamesTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">Loading games...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-    async function loadAdminUserDropdown() {
-      const { data: profiles } = await supabase.from('profiles').select('id, nickname');
-      const dropdown = document.getElementById('admin-user-id');
-      dropdown.innerHTML = '';
-      profiles.forEach(user => {
-        const opt = document.createElement('option');
-        opt.value = user.id;
-        opt.textContent = `${user.nickname || 'User'} - ${user.id.slice(0, 6)}`;
-        dropdown.appendChild(opt);
-      });
-      displayWalletInfo();
-    }
+                <!-- Multiplier Management -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <div class="card-title">Multiplier Management</div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div>
+                                <label for="currentMultiplier">Current Multiplier:</label>
+                                <input type="number" id="currentMultiplier" value="1.00" step="0.01" min="1.00" max="1000" readonly style="background: rgba(255,255,255,0.1);">
+                            </div>
+                            <div>
+                                <label for="nextCrashMultiplier">Next Crash Multiplier:</label>
+                                <input type="number" id="nextCrashMultiplier" value="2.50" step="0.01" min="1.01" max="1000">
+                            </div>
+                            <div>
+                                <label for="multiplierMode">Multiplier Mode:</label>
+                                <select id="multiplierMode" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-color);">
+                                    <option value="random">Random</option>
+                                    <option value="manual">Manual</option>
+                                    <option value="pattern">Pattern</option>
+                                    <option value="probability">Probability</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <button class="btn btn-primary" id="setNextCrashBtn">
+                                <i class="fas fa-target"></i> Set Next Crash
+                            </button>
+                            <button class="btn btn-warning" id="randomizeMultiplierBtn">
+                                <i class="fas fa-dice"></i> Randomize
+                            </button>
+                            <button class="btn btn-danger" id="crashNowBtn">
+                                <i class="fas fa-bomb"></i> Crash Now
+                            </button>
+                            <button class="btn btn-primary" id="openMultiplierOverlayBtn">
+                                <i class="fas fa-edit"></i> Advanced Settings
+                            </button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label for="multiplierPattern">Multiplier Pattern (comma-separated):</label>
+                            <input type="text" id="multiplierPattern" placeholder="1.5, 2.0, 3.5, 1.2, 5.0" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-color);">
+                        </div>
+                    </div>
+                </div>
 
-    window.addEventListener('DOMContentLoaded', loadAdminUserDropdown);
+                <!-- Simple Multiplier Control -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <div class="card-title">Multiplier Control</div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                            Game now uses fair random distribution:<br>
+                            <strong>1.01-3.0x:</strong> 50% | <strong>3.0-10.0x:</strong> 20% | <strong>10.0-20.0x:</strong> 20% | <strong>20.0-1000.0x:</strong> 10%
+                        </p>
+                        
+                        <!-- Min/Max Range Control -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                                <div>
+                                    <label style="font-weight: 600; color: var(--accent-color); margin-bottom: 5px; display: block;">Min Multiplier:</label>
+                                    <input type="number" id="minMultiplier" value="1.01" step="0.01" min="1.01" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-color);">
+                                </div>
+                                <div>
+                                    <label style="font-weight: 600; color: var(--accent-color); margin-bottom: 5px; display: block;">Max Multiplier:</label>
+                                    <input type="number" id="maxMultiplier" value="10.00" step="0.01" min="1.01" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-color);">
+                                </div>
+                            </div>
+                            <button id="applyRange" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-dice"></i> Apply Range
+                            </button>
+                        </div>
 
-    async function displayWalletInfo() {
-      const userId = document.getElementById('admin-user-id').value;
-      const infoBox = document.getElementById('wallet-info');
-      if (!userId) return;
-      const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', userId).single();
-      if (!wallet) {
-        infoBox.textContent = 'Wallet not found';
-      } else {
-        infoBox.textContent = `Balance: ${wallet.balance}, Bonus: ${wallet.bonus}, Withdrawable: ${wallet.withdrawable}`;
-      }
-    }
+                        <!-- Manual Set Next Crash -->
+                        <div style="margin-bottom: 20px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <h4 style="color: var(--accent-color); margin-bottom: 15px;">Set Next Crash</h4>
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-weight: 600; color: var(--text-color); margin-bottom: 5px; display: block;">Next Crash Multiplier:</label>
+                                <input type="number" id="nextCrashMultiplier" value="2.50" step="0.01" min="1.01" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-color);">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button id="setNextCrash" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> Set Next Crash
+                                </button>
+                                <button id="clearNextCrash" class="btn btn-warning">
+                                    <i class="fas fa-times"></i> Clear
+                                </button>
+                            </div>
+                        </div>
 
-    async function adminUpdateUserFunds() {
-      const userId = document.getElementById('admin-user-id').value.trim();
-      const amount = parseFloat(document.getElementById('admin-amount').value);
-      const bonus = parseFloat(document.getElementById('admin-bonus').value);
-      const statusEl = document.getElementById('fund-status');
+                        <!-- Quick Actions -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: var(--accent-color); margin-bottom: 15px;">Quick Actions</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button id="forceLow" class="btn btn-danger">
+                                    <i class="fas fa-arrow-down"></i> Force Low (1.01x - 2.00x)
+                                </button>
+                                <button id="forceMedium" class="btn btn-warning">
+                                    <i class="fas fa-arrow-right"></i> Force Medium (2.00x - 5.00x)
+                                </button>
+                                <button id="forceHigh" class="btn btn-success">
+                                    <i class="fas fa-arrow-up"></i> Force High (5.00x - 20.00x)
+                                </button>
+                                <button id="resetSettings" class="btn btn-primary">
+                                    <i class="fas fa-undo"></i> Reset to Default
+                                </button>
+                            </div>
+                        </div>
 
-      if (!userId || isNaN(amount) || isNaN(bonus)) {
-        statusEl.textContent = 'Fill in all fields correctly.';
-        statusEl.className = 'error';
-        return;
-      }
+                        <!-- Current Settings -->
+                        <div style="padding: 20px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <h4 style="color: var(--accent-color); margin-bottom: 15px;">Current Settings</h4>
+                            <div id="currentSettings">
+                                <p><strong>Distribution:</strong> <span id="currentDistribution">Fair Random (1.01x-1000x)</span></p>
+                                <p><strong>Next Crash:</strong> <span id="currentNextCrash">Random</span></p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 10px;">
+                                    50% low (1.01-3x) | 20% medium (3-10x) | 20% high (10-20x) | 10% very high (20-1000x)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-      const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', userId).single();
-      if (!wallet) {
-        statusEl.textContent = 'User wallet not found.';
-        statusEl.className = 'error';
-        return;
-      }
+                <!-- Game Status -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="card-title">Game Status</div>
+                    </div>
+                    <div id="gameStatusInfo">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                            <div>
+                                <strong>Game State:</strong>
+                                <span id="gameState">Unknown</span>
+                            </div>
+                            <div>
+                                <strong>Round Phase:</strong>
+                                <span id="roundPhase">Unknown</span>
+                            </div>
+                            <div>
+                                <strong>Players Online:</strong>
+                                <span id="playersOnline">0</span>
+                            </div>
+                            <div>
+                                <strong>Active Bets:</strong>
+                                <span id="activeBets">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      const newBalance = wallet.balance + amount;
-      const newBonus = wallet.bonus + bonus;
-      const newWithdrawable = newBalance - newBonus;
+            <!-- Analytics Section -->
+            <div id="analyticsSection" class="dashboard-section hidden">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="card-title">Game Analytics</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="crashMultiplierChart"></canvas>
+                    </div>
+                </div>
 
-      await supabase.from('wallets').update({
-        balance: newBalance,
-        bonus: newBonus,
-        withdrawable: newWithdrawable,
-        updated_at: new Date()
-      }).eq('user_id', userId);
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="card-title">Revenue Trends</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
 
-      statusEl.textContent = 'Wallet updated successfully.';
-      statusEl.className = 'success';
-      displayWalletInfo();
-    }
+            <!-- Settings Section -->
+            <div id="settingsSection" class="dashboard-section hidden">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="card-title">Game Settings</div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label for="minMultiplier">Minimum Crash Multiplier:</label>
+                        <input type="number" id="minMultiplier" value="1.01" step="0.01" min="1.01" max="2.0">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label for="maxMultiplier">Maximum Crash Multiplier:</label>
+                        <input type="number" id="maxMultiplier" value="1000" step="1" min="10" max="10000">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label for="countdownTime">Countdown Time (seconds):</label>
+                        <input type="number" id="countdownTime" value="6" step="1" min="3" max="30">
+                    </div>
+                    <button class="btn btn-primary" id="saveSettingsBtn">
+                        <i class="fas fa-edit"></i> Edit Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    function confirmResetWallet() {
-      if (confirm('Are you sure you want to reset this user’s wallet to 0?')) {
-        adminResetWallet();
-      }
-    }
+    <!-- Form Overlays -->
+    
+    <!-- User Balance Adjustment Form -->
+    <div id="adjustBalanceOverlay" class="form-overlay">
+        <div class="form-overlay-content">
+            <div class="form-overlay-header">
+                <h3 class="form-overlay-title">Adjust User Balance</h3>
+                <button class="form-overlay-close" onclick="closeFormOverlay('adjustBalanceOverlay')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="form-message" id="adjustBalanceMessage"></div>
+            <form id="adjustBalanceForm">
+                <div class="form-group">
+                    <label for="adjustUserId">User ID:</label>
+                    <input type="text" id="adjustUserId" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="adjustCurrentBalance">Current Balance:</label>
+                    <input type="number" id="adjustCurrentBalance" readonly step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="adjustNewBalance">New Balance:</label>
+                    <input type="number" id="adjustNewBalance" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="adjustReason">Reason (Optional):</label>
+                    <textarea id="adjustReason" rows="3" placeholder="Enter reason for balance adjustment..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="form-btn form-btn-secondary" onclick="closeFormOverlay('adjustBalanceOverlay')">Cancel</button>
+                    <button type="submit" class="form-btn form-btn-primary">Update Balance</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    function confirmDeleteUser() {
-      if (confirm('Are you sure you want to delete this user’s data? This cannot be undone.')) {
-        adminDeleteUser();
-      }
-    }
+    <!-- User Ban Form -->
+    <div id="banUserOverlay" class="form-overlay">
+        <div class="form-overlay-content">
+            <div class="form-overlay-header">
+                <h3 class="form-overlay-title">Ban User</h3>
+                <button class="form-overlay-close" onclick="closeFormOverlay('banUserOverlay')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="form-message" id="banUserMessage"></div>
+            <form id="banUserForm">
+                <div class="form-group">
+                    <label for="banUserId">User ID:</label>
+                    <input type="text" id="banUserId" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="banUserEmail">Email:</label>
+                    <input type="text" id="banUserEmail" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="banReason">Ban Reason:</label>
+                    <select id="banReason" required>
+                        <option value="">Select a reason...</option>
+                        <option value="fraud">Fraudulent Activity</option>
+                        <option value="abuse">Abuse of System</option>
+                        <option value="violation">Terms of Service Violation</option>
+                        <option value="suspicious">Suspicious Activity</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="banDetails">Additional Details:</label>
+                    <textarea id="banDetails" rows="4" placeholder="Provide additional details about the ban..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="banDuration">Ban Duration:</label>
+                    <select id="banDuration">
+                        <option value="permanent">Permanent</option>
+                        <option value="7">7 days</option>
+                        <option value="30">30 days</option>
+                        <option value="90">90 days</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="form-btn form-btn-secondary" onclick="closeFormOverlay('banUserOverlay')">Cancel</button>
+                    <button type="submit" class="form-btn form-btn-danger">Ban User</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    async function adminResetWallet() {
-      const userId = document.getElementById('admin-user-id').value.trim();
-      const statusEl = document.getElementById('danger-status');
-      if (!userId) {
-        statusEl.textContent = 'Enter user ID.';
-        statusEl.className = 'error';
-        return;
-      }
-      const { error } = await supabase.from('wallets').update({ balance: 0, bonus: 0, withdrawable: 0 }).eq('user_id', userId);
-      if (error) {
-        statusEl.textContent = error.message;
-        statusEl.className = 'error';
-      } else {
-        statusEl.textContent = 'Wallet reset to 0.';
-        statusEl.className = 'success';
-        displayWalletInfo();
-      }
-    }
+    <!-- Game Settings Form -->
+    <div id="gameSettingsOverlay" class="form-overlay">
+        <div class="form-overlay-content">
+            <div class="form-overlay-header">
+                <h3 class="form-overlay-title">Game Settings</h3>
+                <button class="form-overlay-close" onclick="closeFormOverlay('gameSettingsOverlay')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="form-message" id="gameSettingsMessage"></div>
+            <form id="gameSettingsForm">
+                <div class="form-group">
+                    <label for="settingsMinMultiplier">Minimum Crash Multiplier:</label>
+                    <input type="number" id="settingsMinMultiplier" step="0.01" min="1.01" max="2.0" required>
+                </div>
+                <div class="form-group">
+                    <label for="settingsMaxMultiplier">Maximum Crash Multiplier:</label>
+                    <input type="number" id="settingsMaxMultiplier" step="1" min="10" max="10000" required>
+                </div>
+                <div class="form-group">
+                    <label for="settingsCountdownTime">Countdown Time (seconds):</label>
+                    <input type="number" id="settingsCountdownTime" step="1" min="3" max="30" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="form-btn form-btn-secondary" onclick="closeFormOverlay('gameSettingsOverlay')">Cancel</button>
+                    <button type="submit" class="form-btn form-btn-primary">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    async function adminDeleteUser() {
-      const userId = document.getElementById('admin-user-id').value.trim();
-      const statusEl = document.getElementById('danger-status');
-      if (!userId) {
-        statusEl.textContent = 'Enter user ID.';
-        statusEl.className = 'error';
-        return;
-      }
-      await supabase.from('wallets').delete().eq('user_id', userId);
-      await supabase.from('profiles').delete().eq('id', userId);
-      await supabase.from('bets').delete().eq('user_id', userId);
-      statusEl.textContent = 'User data deleted from public tables (wallet, profile, bets).';
-      statusEl.className = 'success';
-      loadAdminUserDropdown();
-    }
+    <!-- Multiplier Management Form -->
+    <div id="multiplierOverlay" class="form-overlay">
+        <div class="form-overlay-content">
+            <div class="form-overlay-header">
+                <h3 class="form-overlay-title">Multiplier Management</h3>
+                <button class="form-overlay-close" onclick="closeFormOverlay('multiplierOverlay')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="form-message" id="multiplierMessage"></div>
+            <form id="multiplierForm">
+                <div class="form-group">
+                    <label for="overlayNextCrashMultiplier">Next Crash Multiplier:</label>
+                    <input type="number" id="overlayNextCrashMultiplier" step="0.01" min="1.01" max="1000" required>
+                </div>
+                <div class="form-group">
+                    <label for="overlayMultiplierMode">Multiplier Mode:</label>
+                    <select id="overlayMultiplierMode" required>
+                        <option value="random">Random</option>
+                        <option value="manual">Manual</option>
+                        <option value="pattern">Pattern</option>
+                        <option value="probability">Probability</option>
+                    </select>
+                </div>
+                <div class="form-group" id="patternGroup" style="display: none;">
+                    <label for="overlayMultiplierPattern">Multiplier Pattern (comma-separated):</label>
+                    <input type="text" id="overlayMultiplierPattern" placeholder="1.5, 2.0, 3.5, 1.2, 5.0">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="form-btn form-btn-secondary" onclick="closeFormOverlay('multiplierOverlay')">Cancel</button>
+                    <button type="submit" class="form-btn form-btn-primary">Apply Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    async function loadRecentBets() {
-      const { data: bets } = await supabase.from('bets').select('*').order('created_at', { ascending: false }).limit(20);
-      const tbody = document.getElementById('recent-bets');
-      tbody.innerHTML = '';
-      bets.forEach(bet => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${bet.user_id.slice(0, 6)}</td>
-          <td>${bet.bet_amount}</td>
-          <td>${bet.result_status}</td>
-          <td>${bet.multiplier || '-'}</td>
-          <td>${new Date(bet.created_at).toLocaleString()}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-  </script>
+    <script>
+        // Global variables
+        let currentUser = null;
+        let currentEditingUser = null;
+        let crashMultiplierChart = null;
+        let revenueChart = null;
+        let gameStatusListener = null;
+        let gameSettings = {
+            minMultiplier: 1.01,
+            maxMultiplier: 1000,
+            countdownTime: 6,
+            multiplierMode: 'random',
+            nextCrashMultiplier: 2.50,
+            multiplierPattern: [1.5, 2.0, 3.5, 1.2, 5.0],
+            patternIndex: 0
+        };
+
+        let probabilitySettings = {
+            ranges: [
+                { min: 1.01, max: 2.00, probability: 50, color: 'var(--accent-color)' },
+                { min: 2.01, max: 6.00, probability: 30, color: 'var(--warning-color)' },
+                { min: 6.01, max: 20.00, probability: 10, color: 'var(--danger-color)' },
+                { min: 20.01, max: 1000.00, probability: 10, color: '#8A2BE2' }
+            ]
+        };
+
+        // DOM elements
+        const loginScreen = document.getElementById('loginScreen');
+        const adminDashboard = document.getElementById('adminDashboard');
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const navBtns = document.querySelectorAll('.nav-btn');
+        const sections = document.querySelectorAll('.dashboard-section');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAuth();
+            setupEventListeners();
+        });
+
+        // Authentication
+        function initializeAuth() {
+            fireAuth.onAuthStateChanged(fire.auth, (user) => {
+                if (user) {
+                    currentUser = user;
+                    showDashboard();
+                    loadDashboardData();
+                } else {
+                    showLogin();
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Login form
+            loginForm.addEventListener('submit', handleLogin);
+            
+            // Logout
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Navigation
+            navBtns.forEach(btn => {
+                btn.addEventListener('click', () => switchSection(btn.dataset.section));
+            });
+
+            // Game controls
+            console.log('Setting up game control event listeners...');
+            const startBtn = document.getElementById('startGameBtn');
+            const pauseBtn = document.getElementById('pauseGameBtn');
+            const resumeBtn = document.getElementById('resumeGameBtn');
+            const stopBtn = document.getElementById('stopGameBtn');
+            const forceBtn = document.getElementById('forceCrashBtn');
+            
+            if (startBtn) {
+                startBtn.addEventListener('click', (e) => {
+                    console.log('Start button clicked!');
+                    e.preventDefault();
+                    startGame();
+                });
+                console.log('Start button listener added');
+            } else {
+                console.error('Start button not found!');
+            }
+            
+            if (pauseBtn) {
+                pauseBtn.addEventListener('click', (e) => {
+                    console.log('Pause button clicked!');
+                    e.preventDefault();
+                    pauseGame();
+                });
+                console.log('Pause button listener added');
+            } else {
+                console.error('Pause button not found!');
+            }
+            
+            if (resumeBtn) {
+                resumeBtn.addEventListener('click', (e) => {
+                    console.log('Resume button clicked!');
+                    e.preventDefault();
+                    resumeGame();
+                });
+                console.log('Resume button listener added');
+            } else {
+                console.error('Resume button not found!');
+            }
+            
+            if (stopBtn) {
+                stopBtn.addEventListener('click', (e) => {
+                    console.log('Stop button clicked!');
+                    e.preventDefault();
+                    stopGame();
+                });
+                console.log('Stop button listener added');
+            } else {
+                console.error('Stop button not found!');
+            }
+            
+            if (forceBtn) {
+                forceBtn.addEventListener('click', (e) => {
+                    console.log('Force crash button clicked!');
+                    e.preventDefault();
+                    forceCrash();
+                });
+                console.log('Force crash button listener added');
+            } else {
+                console.error('Force crash button not found!');
+            }
+            
+            // Test direct button
+            const testDirectBtn = document.getElementById('testDirectBtn');
+            if (testDirectBtn) {
+                testDirectBtn.addEventListener('click', (e) => {
+                    console.log('Test direct button clicked!');
+                    e.preventDefault();
+                    testDirectCommunication();
+                });
+                console.log('Test direct button listener added');
+            } else {
+                console.error('Test direct button not found!');
+            }
+            
+            // Multiplier management
+            document.getElementById('setNextCrashBtn').addEventListener('click', setNextCrash);
+            document.getElementById('randomizeMultiplierBtn').addEventListener('click', randomizeMultiplier);
+            document.getElementById('crashNowBtn').addEventListener('click', crashNow);
+            document.getElementById('multiplierMode').addEventListener('change', updateMultiplierMode);
+            document.getElementById('openMultiplierOverlayBtn').addEventListener('click', openMultiplierManagement);
+            
+            // Simple Multiplier Control
+            document.getElementById('applyRange').addEventListener('click', applyRange);
+            document.getElementById('setNextCrash').addEventListener('click', setNextCrash);
+            document.getElementById('clearNextCrash').addEventListener('click', clearNextCrash);
+            document.getElementById('forceLow').addEventListener('click', () => forceRange(1.01, 2.00));
+            document.getElementById('forceMedium').addEventListener('click', () => forceRange(2.00, 5.00));
+            document.getElementById('forceHigh').addEventListener('click', () => forceRange(5.00, 20.00));
+            document.getElementById('resetSettings').addEventListener('click', resetSettings);
+            
+            // Settings
+            document.getElementById('saveSettingsBtn').addEventListener('click', openGameSettings);
+            
+            // Form submission handlers
+            document.getElementById('adjustBalanceForm').addEventListener('submit', handleAdjustBalanceSubmit);
+            document.getElementById('banUserForm').addEventListener('submit', handleBanUserSubmit);
+            document.getElementById('gameSettingsForm').addEventListener('submit', handleGameSettingsSubmit);
+            document.getElementById('multiplierForm').addEventListener('submit', handleMultiplierSubmit);
+            
+            // Multiplier mode change handler for overlay
+            document.getElementById('overlayMultiplierMode').addEventListener('change', function() {
+                const patternGroup = document.getElementById('patternGroup');
+                if (this.value === 'pattern') {
+                    patternGroup.style.display = 'block';
+                } else {
+                    patternGroup.style.display = 'none';
+                }
+            });
+            
+            // Close overlays when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('form-overlay')) {
+                    const overlayId = e.target.id;
+                    closeFormOverlay(overlayId);
+                }
+            });
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+
+            try {
+                await fireAuth.signInWithEmailAndPassword(fire.auth, email, password);
+                // Auth state change will handle showing dashboard
+            } catch (error) {
+                showError('Invalid email or password');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fireAuth.signOut(fire.auth);
+                showLogin();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        function showLogin() {
+            loginScreen.style.display = 'flex';
+            adminDashboard.style.display = 'none';
+            currentUser = null;
+        }
+
+        function showDashboard() {
+            loginScreen.style.display = 'none';
+            adminDashboard.style.display = 'block';
+            startGameStatusMonitoring();
+            loadProbabilitySettings();
+            testFirebaseConnection();
+            
+            // Initialize button states
+            updateButtonStates('Unknown', 'Unknown');
+        }
+
+        async function testFirebaseConnection() {
+            try {
+                console.log('Testing Firebase connection...');
+                const testRef = fire.doc(fire.db, 'admin_controls', 'test_connection');
+                await fire.setDoc(testRef, {
+                    test: true,
+                    timestamp: fire.serverTimestamp()
+                });
+                console.log('Firebase connection test successful');
+            } catch (error) {
+                console.error('Firebase connection test failed:', error);
+                alert('Firebase connection issue: ' + error.message);
+            }
+        }
+
+        function testDirectCommunication() {
+            console.log('Testing direct communication...');
+            if (window.opener && window.opener.handleDirectAdminCommand) {
+                console.log('Sending direct pause command...');
+                window.opener.handleDirectAdminCommand('pause');
+                alert('Direct pause command sent!');
+            } else {
+                console.log('No opener window found or direct handler not available');
+                alert('Direct communication not available. Make sure the game is open in another tab.');
+            }
+        }
+
+        function showError(message) {
+            loginError.textContent = message;
+            loginError.style.display = 'block';
+            setTimeout(() => {
+                loginError.style.display = 'none';
+            }, 5000);
+        }
+
+        // Navigation
+        function switchSection(sectionName) {
+            // Update nav buttons
+            navBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.section === sectionName);
+            });
+
+            // Show/hide sections
+            sections.forEach(section => {
+                section.classList.toggle('hidden', section.id !== sectionName + 'Section');
+            });
+
+            // Load section-specific data
+            switch(sectionName) {
+                case 'overview':
+                    loadOverviewData();
+                    break;
+                case 'users':
+                    loadUsersData();
+                    break;
+                case 'games':
+                    loadGamesData();
+                    break;
+                case 'analytics':
+                    loadAnalyticsData();
+                    break;
+                case 'settings':
+                    loadSettingsData();
+                    break;
+            }
+        }
+
+        // Data loading functions
+        async function loadDashboardData() {
+            await Promise.all([
+                loadOverviewData(),
+                loadUsersData(),
+                loadGamesData()
+            ]);
+        }
+
+        async function loadOverviewData() {
+            try {
+                // Load users count
+                const usersQuery = fire.query(fire.collection(fire.db, 'profiles'));
+                const usersSnap = await fire.getDocs(usersQuery);
+                document.getElementById('totalUsers').textContent = usersSnap.size;
+
+                // Load games count
+                const gamesQuery = fire.query(fire.collection(fire.db, 'game_rounds'), fire.limit(100));
+                const gamesSnap = await fire.getDocs(gamesQuery);
+                document.getElementById('activeGames').textContent = gamesSnap.size;
+
+                // Load bets count and revenue
+                const betsQuery = fire.query(fire.collection(fire.db, 'bets'), fire.limit(1000));
+                const betsSnap = await fire.getDocs(betsQuery);
+                document.getElementById('totalBets').textContent = betsSnap.size;
+
+                // Calculate revenue (simplified)
+                let totalRevenue = 0;
+                betsSnap.docs.forEach(doc => {
+                    const bet = doc.data();
+                    if (bet.result_status === 'won') {
+                        totalRevenue -= bet.payout || 0;
+                    } else {
+                        totalRevenue += bet.bet_amount || 0;
+                    }
+                });
+                document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2);
+
+                // Load recent activity
+                loadRecentActivity();
+
+            } catch (error) {
+                console.error('Error loading overview data:', error);
+            }
+        }
+
+        async function loadUsersData() {
+            try {
+                const usersQuery = fire.query(fire.collection(fire.db, 'profiles'), fire.limit(50));
+                const usersSnap = await fire.getDocs(usersQuery);
+                
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+
+                for (const doc of usersSnap.docs) {
+                    const user = doc.data();
+                    const userId = doc.id;
+                    
+                    // Get wallet data
+                    let wallet = { balance: 0, bonus: 0 };
+                    try {
+                        const walletDoc = await fire.getDoc(fire.doc(fire.db, 'wallets', userId));
+                        if (walletDoc.exists()) {
+                            wallet = walletDoc.data();
+                        }
+                    } catch (e) {
+                        console.warn('Could not load wallet for user:', userId);
+                    }
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${userId.slice(0, 8)}...</td>
+                        <td>${user.email || 'N/A'}</td>
+                        <td>${user.nickname || 'Player'}</td>
+                        <td>${user.phone || 'N/A'}</td>
+                        <td>${(wallet.balance || 0).toFixed(2)}</td>
+                        <td><span class="status-badge status-active">Active</span></td>
+                        <td>
+                            <button class="btn btn-warning" onclick="adjustBalance('${userId}')">Adjust</button>
+                            <button class="btn btn-danger" onclick="banUser('${userId}')">Ban</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                }
+
+            } catch (error) {
+                console.error('Error loading users data:', error);
+                document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="7">Error loading users</td></tr>';
+            }
+        }
+
+        async function loadGamesData() {
+            try {
+                const gamesQuery = fire.query(fire.collection(fire.db, 'game_rounds'), fire.orderBy('created_at', 'desc'), fire.limit(20));
+                const gamesSnap = await fire.getDocs(gamesQuery);
+                
+                const tbody = document.getElementById('gamesTableBody');
+                tbody.innerHTML = '';
+
+                gamesSnap.docs.forEach(doc => {
+                    const game = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${game.round_number || 'N/A'}</td>
+                        <td>${(game.crash_multiplier || 0).toFixed(2)}x</td>
+                        <td>${game.created_at ? new Date(game.created_at.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                        <td>${game.players_count || 0}</td>
+                        <td>${(game.total_bets || 0).toFixed(2)}</td>
+                        <td><span class="status-badge status-active">Completed</span></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error loading games data:', error);
+                document.getElementById('gamesTableBody').innerHTML = '<tr><td colspan="6">Error loading games</td></tr>';
+            }
+        }
+
+        async function loadAnalyticsData() {
+            try {
+                // Load crash multiplier data for chart
+                const gamesQuery = fire.query(fire.collection(fire.db, 'game_rounds'), fire.orderBy('created_at', 'desc'), fire.limit(50));
+                const gamesSnap = await fire.getDocs(gamesQuery);
+                
+                const multipliers = [];
+                const timestamps = [];
+                
+                gamesSnap.docs.reverse().forEach(doc => {
+                    const game = doc.data();
+                    multipliers.push(game.crash_multiplier || 0);
+                    timestamps.push(new Date(game.created_at.seconds * 1000).toLocaleTimeString());
+                });
+
+                // Create crash multiplier chart
+                const ctx1 = document.getElementById('crashMultiplierChart').getContext('2d');
+                if (crashMultiplierChart) crashMultiplierChart.destroy();
+                
+                crashMultiplierChart = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: timestamps,
+                        datasets: [{
+                            label: 'Crash Multipliers',
+                            data: multipliers,
+                            borderColor: '#00ff88',
+                            backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#ffffff'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#ffffff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#ffffff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Create revenue chart
+                const ctx2 = document.getElementById('revenueChart').getContext('2d');
+                if (revenueChart) revenueChart.destroy();
+                
+                revenueChart = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Today', 'This Week', 'This Month', 'All Time'],
+                        datasets: [{
+                            label: 'Revenue',
+                            data: [1200, 8500, 25000, 125000], // Placeholder data
+                            backgroundColor: 'rgba(0, 255, 136, 0.6)',
+                            borderColor: '#00ff88',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#ffffff'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#ffffff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#ffffff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error loading analytics data:', error);
+            }
+        }
+
+        function loadSettingsData() {
+            // Load current settings (placeholder)
+            document.getElementById('minMultiplier').value = 1.01;
+            document.getElementById('maxMultiplier').value = 1000;
+            document.getElementById('countdownTime').value = 6;
+        }
+
+        async function loadRecentActivity() {
+            try {
+                const activityContainer = document.getElementById('recentActivity');
+                activityContainer.innerHTML = '<div class="loading">Loading recent activity...</div>';
+
+                // Load recent bets
+                const betsQuery = fire.query(fire.collection(fire.db, 'bets'), fire.orderBy('created_at', 'desc'), fire.limit(10));
+                const betsSnap = await fire.getDocs(betsQuery);
+
+                let activityHtml = '<div style="max-height: 300px; overflow-y: auto;">';
+                
+                betsSnap.docs.forEach(doc => {
+                    const bet = doc.data();
+                    const time = bet.created_at ? new Date(bet.created_at.seconds * 1000).toLocaleString() : 'Unknown';
+                    const status = bet.result_status === 'won' ? 'success' : bet.result_status === 'lost' ? 'danger' : 'warning';
+                    
+                    activityHtml += `
+                        <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>Bet: ${(bet.bet_amount || 0).toFixed(2)}</strong>
+                                <span style="margin-left: 10px; color: rgba(255,255,255,0.7);">${time}</span>
+                            </div>
+                            <span class="status-badge status-${status}">${bet.result_status || 'pending'}</span>
+                        </div>
+                    `;
+                });
+                
+                activityHtml += '</div>';
+                activityContainer.innerHTML = activityHtml;
+
+            } catch (error) {
+                console.error('Error loading recent activity:', error);
+                document.getElementById('recentActivity').innerHTML = '<div>Error loading activity</div>';
+            }
+        }
+
+        // Game control functions
+        async function startGame() {
+            console.log('Start game button clicked');
+            console.log('Current user:', currentUser);
+            console.log('Firebase available:', !!fire);
+            try {
+                const gameControlRef = fire.doc(fire.db, 'admin_controls', 'game_control');
+                console.log('Sending start command to Firestore...');
+                await fire.setDoc(gameControlRef, {
+                    action: 'start',
+                    timestamp: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                console.log('Start command sent successfully');
+                
+                // Update UI immediately
+                updateGameStatus('Starting...', 'countdown');
+                updateButtonStates('Starting', 'countdown');
+                showAdminMessage('Game start command sent!', 'success');
+                
+                // Also try direct communication as fallback
+                if (window.opener && window.opener.handleDirectAdminCommand) {
+                    console.log('Trying direct communication...');
+                    window.opener.handleDirectAdminCommand('start');
+                }
+            } catch (error) {
+                console.error('Error starting game:', error);
+                showAdminMessage('Error starting game: ' + error.message, 'error');
+            }
+        }
+
+        async function pauseGame() {
+            console.log('Pause game function called');
+            try {
+                const gameControlRef = fire.doc(fire.db, 'admin_controls', 'game_control');
+                console.log('Sending pause command to Firestore...');
+                await fire.setDoc(gameControlRef, {
+                    action: 'pause',
+                    timestamp: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                console.log('Pause command sent successfully');
+                
+                // Update UI immediately
+                updateGameStatus('Paused', 'paused');
+                updateButtonStates('Paused', 'paused');
+                showAdminMessage('Game pause command sent!', 'warning');
+                
+                // Also try direct communication as fallback
+                if (window.opener && window.opener.handleDirectAdminCommand) {
+                    console.log('Trying direct communication...');
+                    window.opener.handleDirectAdminCommand('pause');
+                }
+            } catch (error) {
+                console.error('Error pausing game:', error);
+                showAdminMessage('Error pausing game: ' + error.message, 'error');
+            }
+        }
+
+        async function resumeGame() {
+            console.log('Resume game function called');
+            try {
+                const gameControlRef = fire.doc(fire.db, 'admin_controls', 'game_control');
+                console.log('Sending resume command to Firestore...');
+                await fire.setDoc(gameControlRef, {
+                    action: 'resume',
+                    timestamp: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                console.log('Resume command sent successfully');
+                
+                // Update UI immediately
+                updateGameStatus('Running', 'flying');
+                updateButtonStates('Running', 'flying');
+                showAdminMessage('Game resume command sent!', 'success');
+                
+                // Also try direct communication as fallback
+                if (window.opener && window.opener.handleDirectAdminCommand) {
+                    console.log('Trying direct communication...');
+                    window.opener.handleDirectAdminCommand('resume');
+                }
+            } catch (error) {
+                console.error('Error resuming game:', error);
+                showAdminMessage('Error resuming game: ' + error.message, 'error');
+            }
+        }
+
+        async function stopGame() {
+            try {
+                const gameControlRef = fire.doc(fire.db, 'admin_controls', 'game_control');
+                await fire.setDoc(gameControlRef, {
+                    action: 'stop',
+                    timestamp: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                
+                // Update UI immediately
+                updateGameStatus('Stopped', 'stopped');
+                updateButtonStates('Stopped', 'stopped');
+                showAdminMessage('Game stop command sent!', 'danger');
+                
+                // Also try direct communication as fallback
+                if (window.opener && window.opener.handleDirectAdminCommand) {
+                    console.log('Trying direct communication...');
+                    window.opener.handleDirectAdminCommand('stop');
+                }
+            } catch (error) {
+                console.error('Error stopping game:', error);
+                showAdminMessage('Error stopping game: ' + error.message, 'error');
+            }
+        }
+
+        async function forceCrash() {
+            try {
+                const gameControlRef = fire.doc(fire.db, 'admin_controls', 'game_control');
+                await fire.setDoc(gameControlRef, {
+                    action: 'force_crash',
+                    timestamp: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                alert('Force crash command sent!');
+            } catch (error) {
+                console.error('Error forcing crash:', error);
+                alert('Error forcing crash');
+            }
+        }
+
+        // Multiplier management functions
+        async function setNextCrash() {
+            try {
+                const multiplier = parseFloat(document.getElementById('nextCrashMultiplier').value);
+                if (multiplier < 1.01 || multiplier > 1000) {
+                    alert('Multiplier must be between 1.01 and 1000');
+                    return;
+                }
+
+                const multiplierRef = fire.doc(fire.db, 'admin_controls', 'multiplier_control');
+                await fire.setDoc(multiplierRef, {
+                    nextCrashMultiplier: multiplier,
+                    mode: 'manual',
+                    timestamp: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+
+                gameSettings.nextCrashMultiplier = multiplier;
+                alert(`Next crash multiplier set to ${multiplier}x`);
+            } catch (error) {
+                console.error('Error setting next crash:', error);
+                alert('Error setting next crash');
+            }
+        }
+
+        async function randomizeMultiplier() {
+            try {
+                const min = gameSettings.minMultiplier;
+                const max = gameSettings.maxMultiplier;
+                const randomMultiplier = (Math.random() * (max - min) + min).toFixed(2);
+                
+                document.getElementById('nextCrashMultiplier').value = randomMultiplier;
+                
+                const multiplierRef = fire.doc(fire.db, 'admin_controls', 'multiplier_control');
+                await fire.setDoc(multiplierRef, {
+                    nextCrashMultiplier: parseFloat(randomMultiplier),
+                    mode: 'random',
+                    timestamp: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+
+                gameSettings.nextCrashMultiplier = parseFloat(randomMultiplier);
+                alert(`Random multiplier generated: ${randomMultiplier}x`);
+            } catch (error) {
+                console.error('Error randomizing multiplier:', error);
+                alert('Error randomizing multiplier');
+            }
+        }
+
+        async function crashNow() {
+            try {
+                const gameControlRef = fire.doc(fire.db, 'admin_controls', 'game_control');
+                await fire.setDoc(gameControlRef, {
+                    action: 'crash_now',
+                    timestamp: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                alert('Crash now command sent!');
+            } catch (error) {
+                console.error('Error sending crash now:', error);
+                alert('Error sending crash now command');
+            }
+        }
+
+        function updateMultiplierMode() {
+            const mode = document.getElementById('multiplierMode').value;
+            gameSettings.multiplierMode = mode;
+            
+            if (mode === 'pattern') {
+                document.getElementById('multiplierPattern').style.display = 'block';
+            } else {
+                document.getElementById('multiplierPattern').style.display = 'none';
+            }
+            
+            // Save the mode change to Firestore
+            saveMultiplierMode(mode);
+        }
+
+        async function saveMultiplierMode(mode) {
+            try {
+                const modeRef = fire.doc(fire.db, 'admin_settings', 'probability_settings');
+                await fire.setDoc(modeRef, {
+                    multiplierMode: mode,
+                    updated_at: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                }, { merge: true });
+                
+                console.log('Multiplier mode saved:', mode);
+                showAdminMessage(`Multiplier mode set to: ${mode}`, 'success');
+            } catch (error) {
+                console.error('Error saving multiplier mode:', error);
+                showAdminMessage('Error saving multiplier mode', 'error');
+            }
+        }
+
+        async function updateGameStatus(state, phase) {
+            document.getElementById('gameState').textContent = state;
+            document.getElementById('roundPhase').textContent = phase;
+        }
+
+        // Function to show admin messages
+        function showAdminMessage(message, type = 'info') {
+            console.log('Showing admin message:', message, type);
+            
+            // Create or update admin message display
+            let messageDisplay = document.getElementById('adminMessageDisplay');
+            if (!messageDisplay) {
+                messageDisplay = document.createElement('div');
+                messageDisplay.id = 'adminMessageDisplay';
+                messageDisplay.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    z-index: 1000;
+                    font-weight: 500;
+                    max-width: 300px;
+                    word-wrap: break-word;
+                    opacity: 0;
+                    transform: translateX(100%);
+                    transition: all 0.3s ease;
+                `;
+                document.body.appendChild(messageDisplay);
+            }
+            
+            // Set message and styling
+            messageDisplay.textContent = message;
+            messageDisplay.style.background = type === 'success' ? 'var(--success-color)' : 
+                                            type === 'warning' ? 'var(--warning-color)' : 
+                                            type === 'danger' ? 'var(--danger-color)' : 
+                                            type === 'error' ? 'var(--danger-color)' :
+                                            'var(--secondary-color)';
+            messageDisplay.style.color = type === 'success' || type === 'warning' || type === 'danger' || type === 'error' ? 'white' : 'var(--text-color)';
+            
+            // Animate in
+            setTimeout(() => {
+                messageDisplay.style.opacity = '1';
+                messageDisplay.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remove after 4 seconds
+            setTimeout(() => {
+                messageDisplay.style.opacity = '0';
+                messageDisplay.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (messageDisplay.parentNode) {
+                        messageDisplay.parentNode.removeChild(messageDisplay);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        // Real-time game status monitoring
+        function startGameStatusMonitoring() {
+            if (gameStatusListener) {
+                gameStatusListener();
+            }
+
+            gameStatusListener = fire.onSnapshot(
+                fire.doc(fire.db, 'admin_controls', 'game_status'),
+                (doc) => {
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        updateGameStatus(data.state || 'Unknown', data.phase || 'Unknown');
+                        document.getElementById('playersOnline').textContent = data.playersOnline || 0;
+                        document.getElementById('activeBets').textContent = data.activeBets || 0;
+                        document.getElementById('currentMultiplier').value = (data.currentMultiplier || 1.00).toFixed(2);
+                        
+                        // Update button states based on game status
+                        updateButtonStates(data.state, data.phase);
+                    }
+                },
+                (error) => {
+                    console.error('Error monitoring game status:', error);
+                }
+            );
+        }
+
+        // Function to update button states based on game status
+        function updateButtonStates(gameState, gamePhase) {
+            console.log('Updating button states:', gameState, gamePhase);
+            const startBtn = document.getElementById('startGameBtn');
+            const pauseBtn = document.getElementById('pauseGameBtn');
+            const resumeBtn = document.getElementById('resumeGameBtn');
+            const stopBtn = document.getElementById('stopGameBtn');
+            
+            if (!startBtn || !pauseBtn || !resumeBtn || !stopBtn) {
+                console.error('One or more buttons not found:', { startBtn, pauseBtn, resumeBtn, stopBtn });
+                return;
+            }
+            
+            // Reset all button states
+            startBtn.disabled = false;
+            pauseBtn.disabled = false;
+            resumeBtn.disabled = false;
+            stopBtn.disabled = false;
+            
+            switch (gameState) {
+                case 'Running':
+                    if (gamePhase === 'countdown') {
+                        // Game is starting
+                        startBtn.disabled = true;
+                        pauseBtn.disabled = false;
+                        resumeBtn.style.display = 'none';
+                        pauseBtn.style.display = 'inline-block';
+                    } else if (gamePhase === 'flying') {
+                        // Game is actively running
+                        startBtn.disabled = true;
+                        pauseBtn.disabled = false;
+                        resumeBtn.style.display = 'none';
+                        pauseBtn.style.display = 'inline-block';
+                    }
+                    break;
+                    
+                case 'Paused':
+                    // Game is paused
+                    startBtn.disabled = true;
+                    pauseBtn.style.display = 'none';
+                    resumeBtn.style.display = 'inline-block';
+                    resumeBtn.disabled = false;
+                    break;
+                    
+                case 'Stopped':
+                    // Game is stopped
+                    startBtn.disabled = false;
+                    pauseBtn.style.display = 'inline-block';
+                    resumeBtn.style.display = 'none';
+                    pauseBtn.disabled = true;
+                    break;
+                    
+                case 'Starting':
+                    // Game is starting
+                    startBtn.disabled = true;
+                    pauseBtn.disabled = true;
+                    resumeBtn.style.display = 'none';
+                    pauseBtn.style.display = 'inline-block';
+                    break;
+                    
+                default:
+                    // Unknown state - enable start button
+                    startBtn.disabled = false;
+                    pauseBtn.style.display = 'inline-block';
+                    resumeBtn.style.display = 'none';
+                    pauseBtn.disabled = true;
+            }
+        }
+
+        // Form Overlay Management Functions
+        function showFormOverlay(overlayId) {
+            const overlay = document.getElementById(overlayId);
+            if (overlay) {
+                overlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeFormOverlay(overlayId) {
+            const overlay = document.getElementById(overlayId);
+            if (overlay) {
+                overlay.classList.remove('show');
+                document.body.style.overflow = '';
+                // Clear form data
+                const form = overlay.querySelector('form');
+                if (form) {
+                    form.reset();
+                }
+                // Clear messages
+                const message = overlay.querySelector('.form-message');
+                if (message) {
+                    message.style.display = 'none';
+                    message.textContent = '';
+                }
+            }
+        }
+
+        function showFormMessage(overlayId, message, type = 'error') {
+            const overlay = document.getElementById(overlayId);
+            if (overlay) {
+                const messageEl = overlay.querySelector('.form-message');
+                if (messageEl) {
+                    messageEl.textContent = message;
+                    messageEl.className = `form-message ${type}`;
+                    messageEl.style.display = 'block';
+                }
+            }
+        }
+
+        // User management functions with form overlays
+        async function adjustBalance(userId) {
+            currentEditingUser = userId;
+            
+            // Load user data
+                try {
+                const userRef = fire.doc(fire.db, 'profiles', userId);
+                const userSnap = await fire.getDoc(userRef);
+                const user = userSnap.data();
+                
+                    const walletRef = fire.doc(fire.db, 'wallets', userId);
+                const walletSnap = await fire.getDoc(walletRef);
+                const wallet = walletSnap.exists() ? walletSnap.data() : { balance: 0 };
+                
+                // Populate form
+                document.getElementById('adjustUserId').value = userId.slice(0, 8) + '...';
+                document.getElementById('adjustCurrentBalance').value = (wallet.balance || 0).toFixed(2);
+                document.getElementById('adjustNewBalance').value = (wallet.balance || 0).toFixed(2);
+                document.getElementById('adjustReason').value = '';
+                
+                showFormOverlay('adjustBalanceOverlay');
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showAdminMessage('Error loading user data', 'error');
+            }
+        }
+
+        async function banUser(userId) {
+            currentEditingUser = userId;
+            
+            // Load user data
+            try {
+                const userRef = fire.doc(fire.db, 'profiles', userId);
+                const userSnap = await fire.getDoc(userRef);
+                const user = userSnap.data();
+                
+                // Populate form
+                document.getElementById('banUserId').value = userId.slice(0, 8) + '...';
+                document.getElementById('banUserEmail').value = user.email || 'N/A';
+                document.getElementById('banReason').value = '';
+                document.getElementById('banDetails').value = '';
+                document.getElementById('banDuration').value = 'permanent';
+                
+                showFormOverlay('banUserOverlay');
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showAdminMessage('Error loading user data', 'error');
+            }
+        }
+
+        function openGameSettings() {
+            // Populate form with current settings
+            document.getElementById('settingsMinMultiplier').value = gameSettings.minMultiplier;
+            document.getElementById('settingsMaxMultiplier').value = gameSettings.maxMultiplier;
+            document.getElementById('settingsCountdownTime').value = gameSettings.countdownTime;
+            
+            showFormOverlay('gameSettingsOverlay');
+        }
+
+        function openMultiplierManagement() {
+            // Populate form with current settings
+            document.getElementById('overlayNextCrashMultiplier').value = gameSettings.nextCrashMultiplier || 2.50;
+            document.getElementById('overlayMultiplierMode').value = gameSettings.multiplierMode;
+            
+            // Show/hide pattern group based on mode
+            const patternGroup = document.getElementById('patternGroup');
+            if (gameSettings.multiplierMode === 'pattern') {
+                patternGroup.style.display = 'block';
+                document.getElementById('overlayMultiplierPattern').value = gameSettings.multiplierPattern.join(', ');
+            } else {
+                patternGroup.style.display = 'none';
+            }
+            
+            showFormOverlay('multiplierOverlay');
+        }
+
+        // Form submission handlers
+        async function handleAdjustBalanceSubmit(e) {
+            e.preventDefault();
+            
+            const newBalance = parseFloat(document.getElementById('adjustNewBalance').value);
+            const reason = document.getElementById('adjustReason').value;
+            
+            if (isNaN(newBalance) || newBalance < 0) {
+                showFormMessage('adjustBalanceOverlay', 'Please enter a valid balance amount.', 'error');
+                return;
+            }
+            
+            try {
+                const walletRef = fire.doc(fire.db, 'wallets', currentEditingUser);
+                    await fire.updateDoc(walletRef, {
+                    balance: newBalance,
+                        updated_at: fire.serverTimestamp()
+                    });
+                
+                // Log the adjustment
+                await fire.addDoc(fire.collection(fire.db, 'admin_logs'), {
+                    action: 'adjust_balance',
+                    admin_id: currentUser.uid,
+                    user_id: currentEditingUser,
+                    old_balance: parseFloat(document.getElementById('adjustCurrentBalance').value),
+                    new_balance: newBalance,
+                    reason: reason,
+                    timestamp: fire.serverTimestamp()
+                });
+                
+                showFormMessage('adjustBalanceOverlay', 'Balance updated successfully!', 'success');
+                setTimeout(() => {
+                    closeFormOverlay('adjustBalanceOverlay');
+                    loadUsersData();
+                }, 1500);
+                
+                } catch (error) {
+                    console.error('Error updating balance:', error);
+                showFormMessage('adjustBalanceOverlay', 'Error updating balance: ' + error.message, 'error');
+            }
+        }
+
+        async function handleBanUserSubmit(e) {
+            e.preventDefault();
+            
+            const reason = document.getElementById('banReason').value;
+            const details = document.getElementById('banDetails').value;
+            const duration = document.getElementById('banDuration').value;
+            
+            if (!reason) {
+                showFormMessage('banUserOverlay', 'Please select a ban reason.', 'error');
+                return;
+            }
+            
+            try {
+                const userRef = fire.doc(fire.db, 'profiles', currentEditingUser);
+                    await fire.updateDoc(userRef, {
+                        status: 'banned',
+                    ban_reason: reason,
+                    ban_details: details,
+                    ban_duration: duration,
+                    banned_at: fire.serverTimestamp(),
+                    banned_by: currentUser.uid
+                });
+                
+                // Log the ban
+                await fire.addDoc(fire.collection(fire.db, 'admin_logs'), {
+                    action: 'ban_user',
+                    admin_id: currentUser.uid,
+                    user_id: currentEditingUser,
+                    reason: reason,
+                    details: details,
+                    duration: duration,
+                    timestamp: fire.serverTimestamp()
+                });
+                
+                showFormMessage('banUserOverlay', 'User banned successfully!', 'success');
+                setTimeout(() => {
+                    closeFormOverlay('banUserOverlay');
+                    loadUsersData();
+                }, 1500);
+                
+                } catch (error) {
+                    console.error('Error banning user:', error);
+                showFormMessage('banUserOverlay', 'Error banning user: ' + error.message, 'error');
+            }
+        }
+
+        async function handleGameSettingsSubmit(e) {
+            e.preventDefault();
+            
+            const minMultiplier = parseFloat(document.getElementById('settingsMinMultiplier').value);
+            const maxMultiplier = parseFloat(document.getElementById('settingsMaxMultiplier').value);
+            const countdownTime = parseInt(document.getElementById('settingsCountdownTime').value);
+            
+            if (minMultiplier >= maxMultiplier) {
+                showFormMessage('gameSettingsOverlay', 'Minimum multiplier must be less than maximum multiplier.', 'error');
+                return;
+            }
+            
+            try {
+                const settings = {
+                    minMultiplier: minMultiplier,
+                    maxMultiplier: maxMultiplier,
+                    countdownTime: countdownTime,
+                    updated_at: fire.serverTimestamp()
+                };
+
+                const settingsRef = fire.doc(fire.db, 'admin_settings', 'game_settings');
+                await fire.setDoc(settingsRef, settings, { merge: true });
+                
+                // Update local settings
+                gameSettings.minMultiplier = settings.minMultiplier;
+                gameSettings.maxMultiplier = settings.maxMultiplier;
+                gameSettings.countdownTime = settings.countdownTime;
+                
+                showFormMessage('gameSettingsOverlay', 'Settings saved successfully!', 'success');
+                setTimeout(() => {
+                    closeFormOverlay('gameSettingsOverlay');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showFormMessage('gameSettingsOverlay', 'Error saving settings: ' + error.message, 'error');
+            }
+        }
+
+        async function handleMultiplierSubmit(e) {
+            e.preventDefault();
+            
+            const nextCrashMultiplier = parseFloat(document.getElementById('overlayNextCrashMultiplier').value);
+            const mode = document.getElementById('overlayMultiplierMode').value;
+            const pattern = document.getElementById('overlayMultiplierPattern').value;
+            
+            if (nextCrashMultiplier < 1.01 || nextCrashMultiplier > 1000) {
+                showFormMessage('multiplierOverlay', 'Multiplier must be between 1.01 and 1000.', 'error');
+                return;
+            }
+            
+            try {
+                // Update local settings
+                gameSettings.nextCrashMultiplier = nextCrashMultiplier;
+                gameSettings.multiplierMode = mode;
+                
+                if (mode === 'pattern' && pattern) {
+                    gameSettings.multiplierPattern = pattern.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
+                }
+                
+                // Save to Firestore
+                const multiplierRef = fire.doc(fire.db, 'admin_controls', 'multiplier_control');
+                await fire.setDoc(multiplierRef, {
+                    nextCrashMultiplier: nextCrashMultiplier,
+                    mode: mode,
+                    pattern: mode === 'pattern' ? gameSettings.multiplierPattern : null,
+                    timestamp: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                
+                // Update UI
+                document.getElementById('nextCrashMultiplier').value = nextCrashMultiplier;
+                document.getElementById('multiplierMode').value = mode;
+                
+                showFormMessage('multiplierOverlay', 'Multiplier settings applied successfully!', 'success');
+                setTimeout(() => {
+                    closeFormOverlay('multiplierOverlay');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error saving multiplier settings:', error);
+                showFormMessage('multiplierOverlay', 'Error saving multiplier settings: ' + error.message, 'error');
+            }
+        }
+
+        // Settings functions (legacy - now uses form overlay)
+        async function saveSettings() {
+            openGameSettings();
+        }
+
+        async function loadSettingsData() {
+            try {
+                const settingsRef = fire.doc(fire.db, 'admin_settings', 'game_settings');
+                const settingsSnap = await fire.getDoc(settingsRef);
+                
+                if (settingsSnap.exists()) {
+                    const settings = settingsSnap.data();
+                    document.getElementById('minMultiplier').value = settings.minMultiplier || 1.01;
+                    document.getElementById('maxMultiplier').value = settings.maxMultiplier || 1000;
+                    document.getElementById('countdownTime').value = settings.countdownTime || 6;
+                    
+                    // Update local settings
+                    gameSettings.minMultiplier = settings.minMultiplier || 1.01;
+                    gameSettings.maxMultiplier = settings.maxMultiplier || 1000;
+                    gameSettings.countdownTime = settings.countdownTime || 6;
+                } else {
+                    // Use defaults
+                    document.getElementById('minMultiplier').value = 1.01;
+                    document.getElementById('maxMultiplier').value = 1000;
+                    document.getElementById('countdownTime').value = 6;
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        // Probability Management Functions
+        function updateProbabilityDisplay() {
+            let total = 0;
+            
+            // Update each range
+            for (let i = 1; i <= 4; i++) {
+                const min = parseFloat(document.getElementById(`range${i}Min`).value) || 0;
+                const max = parseFloat(document.getElementById(`range${i}Max`).value) || 0;
+                const prob = parseInt(document.getElementById(`range${i}Prob`).value) || 0;
+                
+                // Update probability bar
+                const bar = document.getElementById(`range${i}Bar`).querySelector('div');
+                bar.style.width = prob + '%';
+                
+                total += prob;
+                
+                // Update probability settings
+                if (probabilitySettings.ranges[i-1]) {
+                    probabilitySettings.ranges[i-1].min = min;
+                    probabilitySettings.ranges[i-1].max = max;
+                    probabilitySettings.ranges[i-1].probability = prob;
+                }
+            }
+            
+            // Update total display
+            document.getElementById('totalProbability').textContent = total + '%';
+            
+            // Update status
+            const status = document.getElementById('probabilityStatus');
+            if (total === 100) {
+                status.textContent = '✓ Valid';
+                status.style.color = 'var(--accent-color)';
+            } else if (total < 100) {
+                status.textContent = `⚠ ${100 - total}% remaining`;
+                status.style.color = 'var(--warning-color)';
+            } else {
+                status.textContent = `✗ ${total - 100}% over`;
+                status.style.color = 'var(--danger-color)';
+            }
+        }
+
+        async function saveProbabilitySettings() {
+            try {
+                const total = probabilitySettings.ranges.reduce((sum, range) => sum + range.probability, 0);
+                
+                if (total !== 100) {
+                    showAdminMessage(`Total probability must equal 100%. Current total: ${total}%`, 'error');
+                    return;
+                }
+
+                console.log('Saving probability settings...', probabilitySettings.ranges);
+                
+                // Save to Firestore
+                const probabilityRef = fire.doc(fire.db, 'admin_settings', 'probability_settings');
+                await fire.setDoc(probabilityRef, {
+                    ranges: probabilitySettings.ranges,
+                    multiplierMode: gameSettings.multiplierMode,
+                    updated_at: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+
+                // Send direct command to game for immediate effect
+                if (window.opener && window.opener.handleDirectProbabilityUpdate) {
+                    console.log('Sending direct probability update to game...');
+                    window.opener.handleDirectProbabilityUpdate({
+                        ranges: probabilitySettings.ranges,
+                        multiplierMode: gameSettings.multiplierMode
+                    });
+                }
+
+                showAdminMessage('Probability settings saved and applied!', 'success');
+                console.log('Probability settings saved:', probabilitySettings.ranges);
+            } catch (error) {
+                console.error('Error saving probability settings:', error);
+                showAdminMessage('Error saving probability settings', 'error');
+            }
+        }
+
+        function resetProbabilitySettings() {
+            if (confirm('Reset probability settings to default values?')) {
+                // Reset to default values
+                const defaults = [
+                    { min: 1.01, max: 2.00, probability: 50 },
+                    { min: 2.01, max: 6.00, probability: 30 },
+                    { min: 6.01, max: 20.00, probability: 10 },
+                    { min: 20.01, max: 1000.00, probability: 10 }
+                ];
+
+                for (let i = 1; i <= 4; i++) {
+                    document.getElementById(`range${i}Min`).value = defaults[i-1].min;
+                    document.getElementById(`range${i}Max`).value = defaults[i-1].max;
+                    document.getElementById(`range${i}Prob`).value = defaults[i-1].probability;
+                }
+
+                updateProbabilityDisplay();
+            }
+        }
+
+        function testProbabilitySettings() {
+            const testResults = document.getElementById('testResults');
+            const testContent = document.getElementById('testResultsContent');
+            
+            testResults.style.display = 'block';
+            testContent.innerHTML = '<div class="loading">Running probability test...</div>';
+
+            // Generate 100 random multipliers based on current settings
+            const results = { range1: 0, range2: 0, range3: 0, range4: 0 };
+            const generatedMultipliers = [];
+
+            for (let i = 0; i < 100; i++) {
+                const multiplier = generateProbabilityBasedMultiplier();
+                generatedMultipliers.push(multiplier);
+
+                if (multiplier >= 1.01 && multiplier <= 2.00) results.range1++;
+                else if (multiplier >= 2.01 && multiplier <= 6.00) results.range2++;
+                else if (multiplier >= 6.01 && multiplier <= 20.00) results.range3++;
+                else if (multiplier >= 20.01) results.range4++;
+            }
+
+            // Display results
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">';
+            
+            const ranges = [
+                { name: 'Range 1 (1.01x - 2.00x)', count: results.range1, expected: 50, color: 'var(--accent-color)' },
+                { name: 'Range 2 (2.01x - 6.00x)', count: results.range2, expected: 30, color: 'var(--warning-color)' },
+                { name: 'Range 3 (6.01x - 20.00x)', count: results.range3, expected: 10, color: 'var(--danger-color)' },
+                { name: 'Range 4 (20.01x+)', count: results.range4, expected: 10, color: '#8A2BE2' }
+            ];
+
+            ranges.forEach(range => {
+                const percentage = range.count;
+                const expected = range.expected;
+                const difference = Math.abs(percentage - expected);
+                const status = difference <= 5 ? '✓' : difference <= 10 ? '⚠' : '✗';
+                
+                html += `
+                    <div style="padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="color: ${range.color}; font-weight: 600; margin-bottom: 5px;">${range.name}</div>
+                        <div>Generated: ${range.count}% (Expected: ${expected}%)</div>
+                        <div style="color: ${difference <= 5 ? 'var(--accent-color)' : difference <= 10 ? 'var(--warning-color)' : 'var(--danger-color)'};">
+                            ${status} ${difference}% difference
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            html += '<div style="margin-top: 15px;"><strong>Sample Multipliers:</strong> ' + generatedMultipliers.slice(0, 10).map(m => m.toFixed(2) + 'x').join(', ') + '...</div>';
+            
+            testContent.innerHTML = html;
+        }
+
+        function generateProbabilityBasedMultiplier() {
+            const random = Math.random() * 100;
+            let cumulative = 0;
+
+            for (const range of probabilitySettings.ranges) {
+                cumulative += range.probability;
+                if (random <= cumulative) {
+                    return Math.random() * (range.max - range.min) + range.min;
+                }
+            }
+
+            // Fallback to first range if something goes wrong
+            const firstRange = probabilitySettings.ranges[0];
+            return Math.random() * (firstRange.max - firstRange.min) + firstRange.min;
+        }
+
+        async function loadProbabilitySettings() {
+            try {
+                console.log('Loading probability settings in admin panel...');
+                const probabilityRef = fire.doc(fire.db, 'admin_settings', 'probability_settings');
+                const probabilitySnap = await fire.getDoc(probabilityRef);
+                
+                if (probabilitySnap.exists()) {
+                    const settings = probabilitySnap.data();
+                    console.log('Loaded probability settings:', settings);
+                    
+                    if (settings.ranges && settings.ranges.length === 4) {
+                        probabilitySettings.ranges = settings.ranges;
+                        
+                        // Update UI
+                        for (let i = 1; i <= 4; i++) {
+                            const range = settings.ranges[i-1];
+                            document.getElementById(`range${i}Min`).value = range.min;
+                            document.getElementById(`range${i}Max`).value = range.max;
+                            document.getElementById(`range${i}Prob`).value = range.probability;
+                        }
+                        
+                        updateProbabilityDisplay();
+                    }
+                    
+                    // Load multiplier mode
+                    if (settings.multiplierMode) {
+                        gameSettings.multiplierMode = settings.multiplierMode;
+                        document.getElementById('multiplierMode').value = settings.multiplierMode;
+                        updateMultiplierMode();
+                        console.log('Loaded multiplier mode:', settings.multiplierMode);
+                    }
+                } else {
+                    console.log('No probability settings found, using defaults');
+                }
+            } catch (error) {
+                console.error('Error loading probability settings:', error);
+            }
+        }
+
+        // Simple Multiplier Control Functions
+        async function applyRange() {
+            const min = parseFloat(document.getElementById('minMultiplier').value);
+            const max = parseFloat(document.getElementById('maxMultiplier').value);
+            
+            if (min >= max) {
+                showAdminMessage('Min multiplier must be less than max multiplier', 'error');
+                return;
+            }
+            
+            try {
+                // Update admin settings
+                gameSettings.minMultiplier = min;
+                gameSettings.maxMultiplier = max;
+                gameSettings.multiplierMode = 'random';
+                
+                // Save to Firestore
+                const settingsRef = fire.doc(fire.db, 'admin_settings', 'game_settings');
+                await fire.setDoc(settingsRef, {
+                    ...gameSettings,
+                    updated_at: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                
+                // Send direct command to game
+                if (window.opener && window.opener.handleDirectMultiplierUpdate) {
+                    window.opener.handleDirectMultiplierUpdate({
+                        minMultiplier: min,
+                        maxMultiplier: max,
+                        multiplierMode: 'random'
+                    });
+                }
+                
+                showAdminMessage(`Range set: ${min}x - ${max}x`, 'success');
+                updateCurrentSettings();
+            } catch (error) {
+                console.error('Error applying range:', error);
+                showAdminMessage('Error applying range', 'error');
+            }
+        }
+
+        async function setNextCrash() {
+            const multiplier = parseFloat(document.getElementById('nextCrashMultiplier').value);
+            
+            if (multiplier < 1.01) {
+                showAdminMessage('Multiplier must be at least 1.01x', 'error');
+                return;
+            }
+            
+            try {
+                // Update admin settings
+                gameSettings.nextCrashMultiplier = multiplier;
+                gameSettings.multiplierMode = 'manual';
+                
+                // Save to Firestore
+                const settingsRef = fire.doc(fire.db, 'admin_settings', 'game_settings');
+                await fire.setDoc(settingsRef, {
+                    ...gameSettings,
+                    updated_at: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                
+                // Send direct command to game
+                if (window.opener && window.opener.handleDirectMultiplierUpdate) {
+                    window.opener.handleDirectMultiplierUpdate({
+                        nextCrashMultiplier: multiplier,
+                        multiplierMode: 'manual'
+                    });
+                }
+                
+                showAdminMessage(`Next crash set to: ${multiplier}x`, 'success');
+                updateCurrentSettings();
+            } catch (error) {
+                console.error('Error setting next crash:', error);
+                showAdminMessage('Error setting next crash', 'error');
+            }
+        }
+
+        async function clearNextCrash() {
+            try {
+                // Update admin settings
+                gameSettings.nextCrashMultiplier = null;
+                gameSettings.multiplierMode = 'random';
+                
+                // Save to Firestore
+                const settingsRef = fire.doc(fire.db, 'admin_settings', 'game_settings');
+                await fire.setDoc(settingsRef, {
+                    ...gameSettings,
+                    updated_at: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                
+                // Send direct command to game
+                if (window.opener && window.opener.handleDirectMultiplierUpdate) {
+                    window.opener.handleDirectMultiplierUpdate({
+                        nextCrashMultiplier: null,
+                        multiplierMode: 'random'
+                    });
+                }
+                
+                showAdminMessage('Next crash cleared', 'success');
+                updateCurrentSettings();
+            } catch (error) {
+                console.error('Error clearing next crash:', error);
+                showAdminMessage('Error clearing next crash', 'error');
+            }
+        }
+
+        async function forceRange(min, max) {
+            const multiplier = Math.random() * (max - min) + min;
+            document.getElementById('nextCrashMultiplier').value = multiplier.toFixed(2);
+            await setNextCrash();
+        }
+
+        async function resetSettings() {
+            try {
+                // Reset to default settings
+                gameSettings.minMultiplier = 1.01;
+                gameSettings.maxMultiplier = 10.00;
+                gameSettings.nextCrashMultiplier = null;
+                gameSettings.multiplierMode = 'random';
+                
+                // Save to Firestore
+                const settingsRef = fire.doc(fire.db, 'admin_settings', 'game_settings');
+                await fire.setDoc(settingsRef, {
+                    ...gameSettings,
+                    updated_at: fire.serverTimestamp(),
+                    admin_id: currentUser.uid
+                });
+                
+                // Send direct command to game
+                if (window.opener && window.opener.handleDirectMultiplierUpdate) {
+                    window.opener.handleDirectMultiplierUpdate({
+                        minMultiplier: 1.01,
+                        maxMultiplier: 10.00,
+                        nextCrashMultiplier: null,
+                        multiplierMode: 'random'
+                    });
+                }
+                
+                // Update UI
+                document.getElementById('minMultiplier').value = 1.01;
+                document.getElementById('maxMultiplier').value = 10.00;
+                document.getElementById('nextCrashMultiplier').value = 2.50;
+                
+                showAdminMessage('Reset to default settings', 'success');
+                updateCurrentSettings();
+            } catch (error) {
+                console.error('Error resetting settings:', error);
+                showAdminMessage('Error resetting settings', 'error');
+            }
+        }
+
+        function updateCurrentSettings() {
+            const nextCrashText = gameSettings.nextCrashMultiplier ? `${gameSettings.nextCrashMultiplier}x` : 'Random';
+            
+            document.getElementById('currentNextCrash').textContent = nextCrashText;
+        }
+    </script>
 </body>
 </html>
